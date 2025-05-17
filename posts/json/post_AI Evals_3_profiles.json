@@ -1,0 +1,28 @@
+{
+  "post_number": 3,
+  "keyword": "AI Evals",
+  "author": {
+    "name": "\n              \n                Joanna LeungJoanna Leung\n              \n                \n                   • 3rd+3rd+\n                \n            ",
+    "profile_url": "https://www.linkedin.com/in/jleungf",
+    "title": "\n                Product Manager @ Stan | From Founding to Scaling Startups | 0-1 Product Builder | Solving Complex Problems for People with Technology |Product Manager @ Stan | From Founding to Scaling Startups | 0-1 Product Builder | Solving Complex Problems for People with Technology |\n              ",
+    "image_url": "https://media.licdn.com/dms/image/v2/C4E03AQG1p6dF-UjnXQ/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1649083158058?e=1752710400&v=beta&t=I5Kcr2lOzbhALWqDb7bbsTLgYcpfp6hDoYkyyCYSRII"
+  },
+  "content": "🚨 Building with AI? You need to know Eval.--Eval Series Part 2--🔍 What is Eval, really?Eval (short for evaluation) is how you measure whether your AI is doing what it’s supposed to do inside your product.It moves beyond model accuracy (like precision/recall) to ask:“𝘋𝘰𝘦𝘴 𝘵𝘩𝘦 𝘈𝘐 𝘢𝘤𝘵𝘶𝘢𝘭𝘭𝘺 𝘥𝘦𝘭𝘪𝘷𝘦𝘳 𝘵𝘩𝘦 𝘦𝘹𝘱𝘦𝘳𝘪𝘦𝘯𝘤𝘦 𝘰𝘳 𝘰𝘶𝘵𝘤𝘰𝘮𝘦 𝘮𝘺 𝘶𝘴𝘦𝘳𝘴 𝘢𝘯𝘥 𝘣𝘶𝘴𝘪𝘯𝘦𝘴𝘴 𝘯𝘦𝘦𝘥?”📐 Eval Methods to Know1.  Offline Eval – Run your AI on static prompts, compare against the expected output2. Human Eval – People rate quality: Is it fluent, helpful, right?3. Behavioral Eval – Throw curveballs: adversarial prompts, edge cases4. Automated Eval – Use AI to judge AI (e.g. LLM-as-a-judge)5. Live/Online Eval – Real user data: click-throughs, dwell time, completion🤷‍♀️ Why PMs Should Care→  It defines what “good enough” means so you’re not flying blind→  It catches model risks early, e.g. drift, bias, hallucinations→  It keeps the team focused on outcomes, not just tech magicIf you’re working with AI, Eval isn’t extra.Just like you wouldn’t ship code without testing, don’t ship AI without eval.👇 Comment below on the eval you have used hashtag#eval hashtag#aievaluation hashtag#productmanagement hashtag#aiproduct hashtag#aiPM hashtag#aiproductmanagement",
+  "metadata": {
+    "post_url": "https://www.linkedin.com/in/jleungf",
+    "timestamp": "\n              4d • \n      \n     4 days ago • Visible to anyone on or off LinkedIn\n            ",
+    "visibility": "public"
+  },
+  "engagement": {
+    "total_likers": 1,
+    "total_comments": 0,
+    "likers": [
+      {
+        "url": "https://www.linkedin.com/in/ACoAAASX6CwBxHqwA7vrPSI8qBn6hi3u5MKVj1U",
+        "name": "Ernest Barron",
+        "title": ""
+      }
+    ],
+    "comments": []
+  }
+}

@@ -1,450 +1,836 @@
-# Required libraries: playwright, beautifulsoup4
-# Installation in Colab:
-# !pip install playwright beautifulsoup4
-# !playwright install
-
+import asyncio
 import json
-import time
-import asyncio # Required for async operations and sleep
 import logging
+import time
+from typing import List, Dict, Set, Optional
+from dataclasses import dataclass
+from playwright.async_api import async_playwright, Page, Browser, BrowserContext, TimeoutError as PlaywrightTimeoutError
 import os
-import traceback # For detailed error printing
+import random
 
-# Import the async version of Playwright
-from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError, Error as PlaywrightError
-from bs4 import BeautifulSoup
-
-# --- Logging Setup ---
-# Configure logging to provide informational messages during execution
+# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
-logger = logging.getLogger(__name__) # Use __name__ for logger identification
+logger = logging.getLogger(__name__)
 
-# --- Helper Functions ---
+@dataclass
+class PostEngagement:
+    """Data class to store engagement information for a post"""
+    post_url: str
+    author_profile_url: str
+    likers_profiles: Set[str]
+    commenters_profiles: Set[str]
+    timestamp: str
+    content: str
+    topic_relevance_score: float = 0.0
 
-def save_html(html_content: str, filename: str = "debug_page.html"):
-    """
-    Saves the provided HTML content to a specified file for debugging purposes.
-    This function remains synchronous as it only performs file I/O.
-
-    Args:
-        html_content: The HTML string to save.
-        filename: The name of the file to save the HTML to.
-    """
-    try:
-        # Ensure the directory exists if the filename includes a path (optional)
-        # os.makedirs(os.path.dirname(filename), exist_ok=True)
-        with open(filename, 'w', encoding='utf-8') as f:
-            f.write(html_content)
-        logger.info(f"Successfully saved HTML content to {filename}")
-    except IOError as e:
-        logger.error(f"IOError saving HTML to {filename}: {e}")
-    except Exception as e:
-        logger.error(f"Unexpected error saving HTML to {filename}: {e}")
-
-async def load_cookies_playwright(context, cookies_source: str) -> bool:
-    """
-    Loads cookies from a JSON file or a JSON string into the Playwright BrowserContext.
-    Filters cookies for the '.linkedin.com' domain and formats them correctly.
-    Validates the 'sameSite' attribute.
-    Uses async context.add_cookies.
-
-    Args:
-        context: The Playwright BrowserContext object.
-        cookies_source: Path to the cookies JSON file or a JSON string.
-
-    Returns:
-        True if cookies were loaded successfully, False otherwise.
-    """
-    logger.info(f"Attempting to load cookies from: {cookies_source[:70]}...") # Log source start
-    try:
-        cookies_list = []
-        # Check if the source is likely a JSON string
-        if cookies_source.strip().startswith('[') and cookies_source.strip().endswith(']'):
-            try:
-                cookies_list = json.loads(cookies_source)
-                logger.info("Parsed cookies directly from JSON string.")
-            except json.JSONDecodeError:
-                logger.warning("Input looks like JSON string but failed to parse, assuming file path.")
-                # Fallback to treating as file path if JSON string parse fails
-                try:
-                    with open(cookies_source, 'r', encoding='utf-8') as f:
-                        cookies_list = json.load(f)
-                    logger.info(f"Loaded cookies from file: {cookies_source}")
-                except FileNotFoundError:
-                     logger.error(f"Cookie file not found: {cookies_source}")
-                     return False
-                except json.JSONDecodeError:
-                     logger.error(f"Error decoding JSON from cookie file: {cookies_source}")
-                     return False
-
-        # Else, assume it's a file path
-        else:
-            try:
-                with open(cookies_source, 'r', encoding='utf-8') as f:
-                    cookies_list = json.load(f)
-                logger.info(f"Loaded cookies from file: {cookies_source}")
-            except FileNotFoundError:
-                logger.error(f"Cookie file not found: {cookies_source}")
-                return False
-            except json.JSONDecodeError:
-                logger.error(f"Error decoding JSON from cookie file: {cookies_source}")
-                return False
-            except Exception as e:
-                logger.error(f"Unexpected error opening or reading cookie file {cookies_source}: {e}")
-                return False
-
-        # --- Format cookies for Playwright ---
-        # Playwright expects 'expires' as a Unix timestamp (seconds since epoch).
-        # Cookie extensions might export 'expirationDate' or 'expiry'.
-        formatted_cookies = []
-        required_keys = {'name', 'value', 'domain'}
-        # Define valid SameSite values according to Playwright's requirements
-        valid_same_site_values = {'Strict', 'Lax', 'None'}
-
-        for cookie in cookies_list:
-            # Basic validation and domain filtering
-            if not isinstance(cookie, dict):
-                logger.warning(f"Skipping non-dictionary item in cookies list: {cookie}")
-                continue
-            if not required_keys.issubset(cookie.keys()):
-                logger.warning(f"Skipping cookie missing required fields (name/value/domain): {cookie.get('name', 'N/A')}")
-                continue
-            if '.linkedin.com' not in cookie.get('domain', ''):
-                logger.debug(f"Skipping cookie for non-LinkedIn domain {cookie.get('domain')}: {cookie.get('name')}")
-                continue
-
-            # Convert expiry date to Unix timestamp (integer seconds)
-            expires_timestamp = -1 # Playwright's default for session cookies
-            expiry_val = cookie.get('expirationDate', cookie.get('expiry'))
-            if expiry_val is not None:
-                try:
-                    # Ensure it's treated as a number (float first for flexibility) then int
-                    expires_timestamp = int(float(expiry_val))
-                except (ValueError, TypeError):
-                    logger.warning(f"Could not parse expiry '{expiry_val}' for cookie '{cookie.get('name')}'. Treating as session cookie.")
-
-            # --- Validate SameSite attribute ---
-            input_same_site = cookie.get('sameSite')
-            final_same_site = 'Lax' # Default to Lax
-
-            if input_same_site is None:
-                # If sameSite key is missing, default is fine ('Lax')
-                # logger.debug(f"Cookie '{cookie.get('name')}': sameSite missing, defaulting to 'Lax'.")
-                pass # Already defaulted to Lax
-            elif input_same_site in valid_same_site_values:
-                 # If value is present and valid, use it
-                final_same_site = input_same_site
-            else:
-                # If value is present but invalid (e.g., empty string, other value)
-                logger.warning(f"Cookie '{cookie.get('name')}': Invalid sameSite value '{input_same_site}' found in cookies source. Defaulting to 'Lax'.")
-                # Keep the default 'Lax'
-
-            # Build the cookie dictionary in the format Playwright expects
-            formatted_cookie = {
-                'name': cookie['name'],
-                'value': cookie['value'],
-                'domain': cookie['domain'],
-                'path': cookie.get('path', '/'), # Default path to '/'
-                'expires': expires_timestamp,
-                'httpOnly': cookie.get('httpOnly', False), # Default httpOnly to False
-                'secure': cookie.get('secure', True),     # Default secure to True (HTTPS)
-                'sameSite': final_same_site # Use the validated or defaulted value
-            }
-            formatted_cookies.append(formatted_cookie)
-
-        if not formatted_cookies:
-             logger.warning(f"No suitable cookies found for LinkedIn domains in the provided source.")
-             return False
-
-        # --- Add cookies to the context (async operation) ---
-        logger.info(f"Adding {len(formatted_cookies)} formatted cookies to the browser context.")
-        await context.add_cookies(formatted_cookies)
-        logger.info("Cookies successfully added to the browser context.")
-        return True
-
-    except Exception as e:
-        # Catch any other unexpected errors during the process
-        logger.error(f"An unexpected error occurred in load_cookies_playwright: {e}")
-        traceback.print_exc() # Print detailed traceback for debugging
-        return False
-
-async def check_login_status_playwright(page) -> bool:
-    """
-    Checks if the session is logged into LinkedIn by navigating to the feed
-    and looking for a specific element that indicates a logged-in state.
-    Uses async page methods.
-
-    Args:
-        page: The Playwright Page object.
-
-    Returns:
-        True if logged in, False otherwise.
-    """
-    logger.info("Checking LinkedIn login status...")
-    feed_url = "https://www.linkedin.com/feed/"
-    # Selectors for login indicators (these might change if LinkedIn updates its site)
-    # Option 1: The main feed sharing composer box
-    login_indicator_selector = "div.share-box-feed-entry__closed-share-box"
-    # Option 2: The profile picture in the top navigation bar
-    # login_indicator_selector = "img.global-nav__me-photo"
-    # Option 3: The "Messaging" link in the top navigation
-    # login_indicator_selector = "a[href*='/messaging/']"
-
-    try:
-        logger.info(f"Navigating to LinkedIn feed: {feed_url}")
-        # Navigate to the feed page, wait for DOM content to be loaded
-        # Increased timeout for potentially slow network/Colab environment
-        await page.goto(feed_url, wait_until='domcontentloaded', timeout=60000) # 60 seconds timeout
-
-        # Add a small delay to allow dynamic elements to potentially render after DOM load
-        await asyncio.sleep(5) # 5 seconds sleep
-
-        current_url = page.url
-        logger.info(f"Current URL after navigation and sleep: {current_url}")
-
-        # --- Check for redirects to login, authwall, or challenge pages ---
-        if any(sub in current_url for sub in ["/login", "/authwall", "/challenge", "/checkpoint"]):
-            logger.error(f"Redirected to login/authwall/challenge page: {current_url}")
-            # Save the HTML of the redirect page for debugging
-            save_html(await page.content(), "playwright_redirect_page.html")
-            return False
-
-        # --- Look for the login indicator element ---
-        logger.info(f"Looking for login indicator element with selector: '{login_indicator_selector}'")
+class LinkedInAutomation:
+    def __init__(self, cookies_path: str = "cookies.json"):
+        self.cookies_path = cookies_path
+        self.browser: Optional[Browser] = None
+        self.context: Optional[BrowserContext] = None
+        self.page: Optional[Page] = None
+        self.is_logged_in: bool = False
+        
+    async def initialize(self) -> bool:
+        """Initialize the browser and context"""
         try:
-            # Wait for the chosen indicator element to be present and visible on the page
-            # Increased timeout for element visibility
-            await page.locator(login_indicator_selector).wait_for(state='visible', timeout=30000) # 30 seconds timeout
-
-            # If wait_for completes without error, the element was found
-            logger.info("Login indicator found on feed page. Login appears successful.")
-            save_html(await page.content(), "playwright_feed_page_success.html")
-            return True
-        except PlaywrightTimeoutError:
-            # If the element is not found within the timeout period
-            logger.error(f"Timeout: Could not find login indicator ('{login_indicator_selector}') on feed page.")
-            logger.info("Saving HTML of feed page for debugging (login indicator not found).")
-            save_html(await page.content(), "playwright_feed_page_fail_indicator_not_found.html")
-            return False
-        except PlaywrightError as e:
-             # Handle other potential Playwright errors during element location
-             logger.error(f"Playwright error while looking for login indicator: {e}")
-             save_html(await page.content(), "playwright_feed_page_error_locator.html")
-             return False
-
-    except PlaywrightTimeoutError:
-        # Handle timeouts during the initial page navigation
-        logger.error(f"Timeout occurred during navigation to {feed_url}.")
-        try:
-            save_html(await page.content(), "playwright_navigation_timeout_page.html")
-        except Exception as save_err:
-             logger.error(f"Could not save HTML after navigation timeout: {save_err}")
-        return False
-    except PlaywrightError as e:
-        # Handle other potential Playwright errors during navigation/page interaction
-        logger.error(f"A Playwright error occurred checking login status: {e}")
-        try:
-            save_html(await page.content(), "playwright_general_error_page.html")
-        except Exception as save_err:
-             logger.error(f"Could not save HTML after Playwright error: {save_err}")
-        return False
-    except Exception as e:
-        # Catch any other unexpected errors
-        logger.error(f"An unexpected error occurred checking login status: {e}")
-        traceback.print_exc()
-        try:
-            save_html(await page.content(), "playwright_unexpected_error_page.html")
-        except Exception as save_err:
-             logger.error(f"Could not save HTML after unexpected error: {save_err}")
-        return False
-
-# --- Main Execution Logic ---
-
-async def main_playwright():
-    """
-    Main asynchronous function to launch Playwright, load cookies, check login,
-    and scrape a target profile if logged in.
-    """
-    logger.info("Starting Playwright script...")
-    # Use the async context manager for Playwright
-    async with async_playwright() as p:
-        browser = None # Initialize browser variable
-        context = None # Initialize context variable
-        try:
-            # --- Launch Browser ---
-            logger.info("Launching Chromium browser...")
-            # headless=False shows the browser window (useful for debugging, not possible in basic Colab)
-            # headless=True runs in the background (standard for automation)
-            browser = await p.chromium.launch(headless=False, args=[
-                '--no-sandbox',                 # Required for running as root/in containers like Colab
-                '--disable-dev-shm-usage',      # Overcomes limited shared memory resources
-                '--disable-gpu',                # Often needed in headless environments
-                # '--disable-blink-features=AutomationControlled' # Experimental: Might help avoid bot detection
-            ])
-            logger.info("Browser launched successfully.")
-
-            # --- Create Browser Context ---
-            # A browser context is like an isolated browser profile
-            logger.info("Creating new browser context.")
-            context = await browser.new_context(
-                user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36', # Mimic a real browser
-                # You can configure other context options here (viewport, locale, etc.)
-                # viewport={'width': 1280, 'height': 800},
-                # locale='en-US'
+            playwright = await async_playwright().start()
+            self.browser = await playwright.chromium.launch(
+                headless=False,  # Set to True for production
+                args=['--no-sandbox', '--disable-dev-shm-usage']
             )
-            logger.info("Browser context created.")
-
-            # --- Create Page ---
-            page = await context.new_page()
-            logger.info("New page created.")
-
-            # --- Load Cookies ---
-            # Ensure cookies.json is present in the Colab environment's root directory
-            # or provide the correct path.
-            cookies_file_path = 'cookies.json'
-            if not await load_cookies_playwright(context, cookies_file_path):
-                logger.error(f"Failed to load cookies from {cookies_file_path}. Exiting.")
-                # No need to return here, finally block will handle cleanup
-                raise Exception("Cookie loading failed") # Raise exception to go to finally block
-
-            # --- Check Login Status ---
-            is_logged_in = await check_login_status_playwright(page)
-
-            if is_logged_in:
-                logger.info("LinkedIn session confirmed via Playwright. Proceeding to profile scraping.")
-
-                # --- Navigate to Target Profile ---
-                # Replace with the actual profile URL you want to scrape
-                profile_url = "https://www.linkedin.com/in/williamhgates/" # Example: Bill Gates
-                # profile_url = "https://www.linkedin.com/in/alexwang2911/" # Example: Alex Wang
-                logger.info(f"Attempting to access profile: {profile_url}")
-
-                try:
-                    # Navigate to the profile page
-                    await page.goto(profile_url, wait_until='domcontentloaded', timeout=60000) # 60s timeout
-                    await asyncio.sleep(5) # Allow time for dynamic content rendering
-
-                    # --- Verify Profile Page Loaded ---
-                    # Wait for a specific element unique to profile pages to ensure loading
-                    # Example: The main heading containing the person's name
-                    # This selector might change based on LinkedIn updates. Inspect the page to confirm.
-                    profile_name_selector = "h1.text-heading-xlarge"
-                    logger.info(f"Looking for profile name element ('{profile_name_selector}')...")
-                    await page.locator(profile_name_selector).wait_for(state='visible', timeout=30000) # 30s timeout
-                    logger.info("Profile page main content indicator loaded.")
-
-                    # --- Extract Data ---
-                    logger.info("Extracting data from profile page...")
-                    page_html = await page.content()
-                    save_html(page_html, "playwright_target_profile_page.html") # Save profile HTML
-
-                    # Option 1: Use Playwright locators (often simpler and more robust)
-                    name = await page.locator(profile_name_selector).text_content()
-                    logger.info(f"Profile Name (Playwright): {name.strip()}")
-
-                    # Example: Extract headline (selector might need adjustment)
-                    headline_selector = "div.text-body-medium.break-words"
-                    try:
-                         # Use .first in case there are multiple matches (e.g., in "About" section)
-                        headline = await page.locator(headline_selector).first.text_content(timeout=5000) # Shorter timeout ok
-                        logger.info(f"Headline (Playwright): {headline.strip()}")
-                    except PlaywrightTimeoutError:
-                        logger.warning("Could not find headline element using Playwright locator.")
-                    except Exception as e:
-                         logger.warning(f"Error extracting headline with Playwright: {e}")
-
-
-                    # Option 2: Use BeautifulSoup to parse the saved HTML (if preferred)
-                    soup = BeautifulSoup(page_html, 'html.parser')
-                    title_tag = soup.find('title')
-                    if title_tag:
-                        logger.info(f"Profile Page Title (BS4): {title_tag.text.strip()}")
-                    # Extract name using BS4 (example, adapt selector if needed)
-                    name_element_bs4 = soup.select_one(profile_name_selector)
-                    if name_element_bs4:
-                         logger.info(f"Profile Name (BS4): {name_element_bs4.get_text(strip=True)}")
-                    else:
-                         logger.warning("Could not find name element using BS4 selector.")
-
-                    # Add more data extraction logic here as needed...
-
-                # --- Error Handling for Profile Scraping ---
-                except PlaywrightTimeoutError:
-                    logger.error(f"Timeout occurred while loading or finding elements on profile page: {profile_url}")
-                    try:
-                         save_html(await page.content(), "playwright_profile_timeout_page.html")
-                    except Exception as save_err:
-                         logger.error(f"Could not save HTML after profile timeout: {save_err}")
-                except PlaywrightError as e:
-                    logger.error(f"A Playwright error occurred accessing profile page {profile_url}: {e}")
-                    try:
-                        save_html(await page.content(), "playwright_profile_playwright_error_page.html")
-                    except Exception as save_err:
-                         logger.error(f"Could not save HTML after profile Playwright error: {save_err}")
-                except Exception as e:
-                    logger.error(f"An unexpected error occurred accessing profile page {profile_url}: {e}")
-                    traceback.print_exc()
-                    try:
-                        save_html(await page.content(), "playwright_profile_unexpected_error_page.html")
-                    except Exception as save_err:
-                         logger.error(f"Could not save HTML after profile unexpected error: {save_err}")
-            else:
-                # If check_login_status_playwright returned False
-                logger.error("LinkedIn session check failed. Cannot proceed to profile scraping.")
-
-        # --- General Error Handling ---
+            self.context = await self.browser.new_context(
+                user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            )
+            self.page = await self.context.new_page()
+            return True
         except Exception as e:
-            # Catch-all for errors during setup or if cookie loading failed explicitly
-            logger.error(f"An error occurred in the main execution block: {e}")
-            traceback.print_exc()
+            logger.error(f"Failed to initialize browser: {e}")
+            return False
 
-        # --- Cleanup ---
-        finally:
-            # This block executes whether errors occurred or not
-            logger.info("Starting cleanup...")
-            if context:
+    async def load_cookies(self) -> bool:
+        """Load cookies from file"""
+        try:
+            if not os.path.exists(self.cookies_path):
+                logger.error(f"Cookie file not found: {self.cookies_path}")
+                return False
+                
+            with open(self.cookies_path, 'r') as file:
+                cookies = json.load(file)
+                
+            formatted_cookies = []
+            for cookie in cookies:
+                if '.linkedin.com' in cookie.get('domain', ''):
+                    cookie['sameSite'] = 'Lax'  # Ensure proper sameSite attribute
+                    formatted_cookies.append(cookie)
+                    
+            await self.context.add_cookies(formatted_cookies)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to load cookies: {e}")
+            return False
+
+    async def verify_login(self) -> bool:
+        """Verify LinkedIn login status by handling the intermediate 'Sign in as' prompt and puzzle challenges"""
+        try:
+            logger.info("Checking LinkedIn login status...")
+            feed_url = "https://www.linkedin.com/feed/"
+            login_indicator_selector = "div.share-box-feed-entry__closed-share-box"
+            sign_in_as_button_selector = 'button:has-text("LinkedIn User")'
+            puzzle_selector = 'div[data-id="challenge"]'
+
+            # Navigate to feed
+            logger.info(f"Navigating to LinkedIn feed: {feed_url}")
+            await self.page.goto(feed_url, wait_until='domcontentloaded', timeout=60000)
+            await asyncio.sleep(5)  # Wait for potential redirect
+
+            # Check if we're on a puzzle/challenge page
+            try:
+                is_puzzle = await self.page.locator(puzzle_selector).is_visible()
+                if is_puzzle:
+                    logger.info("Detected puzzle/challenge page. Waiting for user to solve it...")
+                    wait_time = 0
+                    max_wait_time = 120  # Wait up to 60 seconds
+
+                    while wait_time < max_wait_time:
+                        # Check if we're still on the puzzle page
+                        if not await self.page.locator(puzzle_selector).is_visible():
+                            logger.info("Puzzle solved! Proceeding with login verification...")
+                            break
+                        await asyncio.sleep(5)
+                        wait_time += 5
+                        logger.info(f"Still waiting for puzzle to be solved... ({wait_time}s)")
+                    
+                    if wait_time >= max_wait_time:
+                        logger.error("Puzzle solving timeout reached")
+                        return False
+
+            except PlaywrightTimeoutError:
+                logger.info("No puzzle/challenge detected")
+            except Exception as e:
+                logger.warning(f"Error checking for puzzle: {e}")
+
+            # Check for and handle "Sign in as" button
+            logger.info("Checking for intermediate 'Sign in as' button...")
+            try:
+                sign_in_button = self.page.locator(sign_in_as_button_selector)
+                await sign_in_button.wait_for(state='visible', timeout=10000)
+                logger.info("Intermediate 'Sign in as' button found. Clicking it...")
+                await sign_in_button.click()
+                logger.info("Clicked the 'Sign in as' button. Waiting for transition...")
+                await asyncio.sleep(7)
+            except PlaywrightTimeoutError:
+                logger.info("No 'Sign in as' button found (proceeding as normal).")
+            except Exception as e:
+                logger.warning(f"Error handling 'Sign in as' button: {e}")
+
+            # Check for puzzle/challenge during login
+            current_url = self.page.url
+            logger.info(f"Current URL after navigation: {current_url}")
+            
+            if any(sub in current_url for sub in ["/checkpoint/challenge"]):
+                logger.info("Detected security puzzle/challenge. Waiting for manual resolution...")
+                start_time = time.time()
+                while time.time() - start_time < 60:  # Wait up to 60 seconds
+                    current_url = self.page.url
+                    if "/feed" in current_url:
+                        logger.info("Puzzle resolved, proceeding with login verification...")
+                        break
+                    remaining = int(60 - (time.time() - start_time))
+                    logger.info(f"Waiting for puzzle resolution... {remaining} seconds remaining")
+                    await asyncio.sleep(5)  # Check every 5 seconds
+            elif any(sub in current_url for sub in ["/login", "/authwall", "/challenge", "/checkpoint"]):
+                logger.error(f"Redirected to auth page: {current_url}")
+                self.is_logged_in = False
+                return False
+
+            # Final login verification
+            logger.info("Looking for feed page indicator...")
+            try:
+                await self.page.locator(login_indicator_selector).wait_for(state='visible', timeout=30000)
+                logger.info("Successfully verified LinkedIn login.")
+                self.is_logged_in = True
+                return True
+            except Exception as e:
+                logger.error(f"Failed to verify login: {str(e)}")
+                self.is_logged_in = False
+                return False
+
+        except PlaywrightTimeoutError:
+            logger.error("Timeout verifying login status")
+            self.is_logged_in = False
+            return False
+        except Exception as e:
+            logger.error(f"Login verification failed: {e}")
+            self.is_logged_in = False
+            return False
+
+    async def extract_engagement_data(self, page: Page, post_container: Page, post_data: Dict) -> Dict:
+        """Extract lists of users who liked and commented on a post."""
+        try:
+            # Extract likers
+            reactions_locator = post_container.locator('button.social-details-social-counts__count-value')
+            reactions_count = await reactions_locator.count()
+            
+            if reactions_count > 0 and post_data['engagement']['likes'] > 0:
+                await reactions_locator.first.click()
+                await page.wait_for_selector('div.artdeco-modal__content')
+                
+                # Wait for the list to load and scroll to load all profiles
+                await page.wait_for_selector('.social-details-reactors-tab-body-list-item')
+                
+                # Scroll the modal to load all profiles
+                modal_content = page.locator('div.artdeco-modal__content')
+                last_height = 0
+                while True:
+                    # Get all currently loaded profile links
+                    current_height = await modal_content.evaluate('el => el.scrollHeight')
+                    if current_height == last_height:
+                        break
+                    
+                    await modal_content.evaluate('el => el.scrollTo(0, el.scrollHeight)')
+                    await page.wait_for_timeout(1000)  # Wait for new content to load
+                    last_height = current_height
+                
+                # Extract profile information from the modal
+                likers_locator = page.locator('.social-details-reactors-tab-body-list-item .artdeco-entity-lockup')
+                likers = []
+                
+                for i in range(await likers_locator.count()):
+                    liker = likers_locator.nth(i)
+                    profile_link = liker.locator('a.link-without-hover-state').first
+                    
+                    url = await profile_link.get_attribute('href')
+                    name = await liker.locator('.artdeco-entity-lockup__title').text_content()
+                    title = await liker.locator('.artdeco-entity-lockup__caption').text_content()
+                    
+                    if url and name:
+                        likers.append({
+                            "url": url.split('?')[0],  # Remove tracking parameters
+                            "name": name.strip(),
+                            "title": title.strip() if title else ""
+                        })
+                
+                if likers:
+                    post_data['engagement']['likers_list'] = likers
+                
+                # Close modal
+                await page.locator('button[aria-label="Dismiss"]').click()
+            
+            # Extract commenters
+            comments_locator = post_container.locator('button.social-details-social-counts__comments >> text=comment')
+            comments_count = await comments_locator.count()
+            
+            if comments_count > 0 and post_data['engagement']['comments'] > 0:
+                await comments_locator.first.click()
+                await page.wait_for_selector('.comments-comments-list')
+                
+                # Extract profile information
+                commenters_locator = page.locator('.comments-comments-list >> a.app-aware-link:has(.comments-post-meta__name-text)')
+                commenters = []
+                
+                for i in range(await commenters_locator.count()):
+                    commenter = commenters_locator.nth(i)
+                    url = await commenter.get_attribute('href')
+                    name = await commenter.locator('.comments-post-meta__name-text').text_content()
+                    if url and name:
+                        commenters.append({"url": url, "name": name.strip()})
+                
+                if commenters:
+                    post_data['engagement']['commenters_list'] = commenters
+            
+            return post_data
+            
+        except Exception as e:
+            logger.error(f"Error extracting engagement data: {e}")
+            return post_data
+
+    async def process_post_html(self, html: str, post_number: int, keyword: str) -> Dict:
+        """
+        Extract specific information from the LinkedIn post HTML.
+        
+        Args:
+            html: The raw HTML string of the post container
+            post_number: A unique number for this post
+            keyword: The search keyword that found this post
+        """
+        try:
+            # Remove highlight before processing
+            container = self.page.locator('div.fie-impression-container').nth(post_number - 1)
+            await container.evaluate('''node => {
+                node.classList.remove('highlight-container');
+                node.classList.add('processing-container');
+            }''')
+
+            # Find and click the reactions button directly in the container
+            reactions_button = container.locator('button[data-reaction-details]')
+            
+            if await reactions_button.count() > 0:
+                logger.info(f"Found reactions button for post {post_number}")
+                profiles = []
+                
                 try:
-                    await context.close()
-                    logger.info("Browser context closed.")
-                except Exception as e:
-                    logger.error(f"Error closing browser context: {e}")
-            if browser:
-                try:
-                    await browser.close()
-                    logger.info("Browser closed.")
-                except Exception as e:
-                    logger.error(f"Error closing browser: {e}")
-            logger.info("Playwright script finished.")
+                    # Scroll the button into view and click
+                    await reactions_button.scroll_into_view_if_needed()
+                    await asyncio.sleep(1)  # Wait for smooth scrolling
+                    await reactions_button.click()
+                    
+                    # Wait for modal with timeout
+                    try:
+                        await self.page.wait_for_selector('div.artdeco-modal__content', timeout=5000)
+                        logger.info("Modal opened successfully")
+                    except PlaywrightTimeoutError:
+                        logger.error("Modal failed to open within timeout")
+                        await self._restore_container_state(container, post_number)
+                        return None
+                    
+                    # Wait for profiles to load
+                    try:
+                        await self.page.wait_for_selector('.social-details-reactors-tab-body-list-item', timeout=5000)
+                    except PlaywrightTimeoutError:
+                        logger.error("Profile list failed to load within timeout")
+                        await self.close_modal()
+                        await self._restore_container_state(container, post_number)
+                        return None
+                    
+                    # Extract post URL and post author information
+                    post_url = await container.locator('.update-components-actor__meta-link').get_attribute('href')
+                    post_url = post_url.split('?')[0] if post_url else None  # Remove tracking parameters
+                    
+                    author_info = {
+                        "name": await container.locator('.update-components-actor__title').text_content(),
+                        "profile_url": post_url,
+                        "title": await container.locator('.update-components-actor__description').text_content(),
+                        "image_url": await container.locator('.update-components-actor__avatar-image').get_attribute('src')
+                    }
+                    
+                    # Extract post metadata
+                    post_metadata = {
+                        "post_url": post_url,
+                        "timestamp": await container.locator('.update-components-actor__sub-description').text_content(),
+                        "visibility": "public" if await container.locator('li-icon[type="globe-americas"]').count() > 0 else "private"
+                    }
+                    
+                    # Extract post content
+                    content_elem = container.locator('.update-components-text')
+                    post_content = await content_elem.text_content() if await content_elem.count() > 0 else ""
+                    
+                    # Extract profiles of people who liked the post
+                    # First scroll the modal to load all profiles
+                    modal = self.page.locator('div.artdeco-modal__content')
+                    last_height = 0
+                    scroll_attempts = 0
+                    max_scroll_attempts = 20  # Increased to ensure we load more profiles
+                    
+                    logger.info("Scrolling modal to load all profiles...")
+                    while scroll_attempts < max_scroll_attempts:
+                        # Get current height
+                        current_height = await modal.evaluate('el => el.scrollHeight')
+                        
+                        # Break if no more content
+                        if current_height == last_height:
+                            logger.info(f"No more profiles to load after {scroll_attempts} scrolls")
+                            break
+                        
+                        # Scroll and wait for new content
+                        await modal.evaluate('el => el.scrollTo(0, el.scrollHeight)')
+                        await asyncio.sleep(1)  # Wait for content to load
+                        
+                        # Update height and counter
+                        last_height = current_height
+                        scroll_attempts += 1
+                        logger.info(f"Modal scroll attempt {scroll_attempts}/{max_scroll_attempts}")
+                    
+                    # Now extract all loaded profiles
+                    await asyncio.sleep(1)  # Wait for final content to settle
+                    profile_container = self.page.locator('.social-details-reactors-tab-body-list-item')
+                    total_profiles = await profile_container.count()
+                    logger.info(f"Found {total_profiles} profiles to extract")
+                    likers = []
+                    
+                    for i in range(total_profiles):
+                        try:
+                            item = profile_container.nth(i)
+                            link_elem = item.locator('a.link-without-hover-state')
+                            name_elem = item.locator('.artdeco-entity-lockup__title')
+                            title_elem = item.locator('.artdeco-entity-lockup__subtitle')
+                            
+                            if await link_elem.count() > 0:
+                                url = await link_elem.get_attribute('href')
+                                name = await name_elem.text_content() if await name_elem.count() > 0 else ""
+                                title = await title_elem.text_content() if await title_elem.count() > 0 else ""
+                                
+                                if url:
+                                    # Clean up the name - remove "View X's profile" text
+                                    clean_name = name.split("View")[0].strip() if "View" in name else name.strip()
+                                    clean_url = url.split('?')[0]  # Remove tracking parameters
+                                    likers.append({
+                                        "url": clean_url,
+                                        "name": clean_name,
+                                        "title": title.strip()
+                                    })
+                        except Exception as e:
+                            logger.warning(f"Error extracting liker profile {i}: {e}")
+                            continue
+                    
+                    # Close the reactions modal before getting comments
+                    await self.close_modal()
+                    await asyncio.sleep(2)  # Increased wait time to ensure modal is fully closed
+                    
+                    # Extract comments and commenters
+                    comments = []
+                    comments_button = container.locator('button.social-details-social-counts__count-value:has-text("comment")')
+                    if await comments_button.count() > 0:
+                        try:
+                            # Extract number of comments from button text
+                            comments_text = await comments_button.text_content()
+                            total_comments = int(''.join(filter(str.isdigit, comments_text))) if comments_text else 0
+                            logger.info(f"Found {total_comments} comments to process")
+                            
+                            # Make sure we can see the comments button
+                            await comments_button.scroll_into_view_if_needed()
+                            await asyncio.sleep(1)
+                            
+                            # Click and wait for comments
+                            await comments_button.click()
+                            logger.info("Clicked comments button, waiting for comments to load...")
+                            await self.page.wait_for_selector('.comments-comment-list__container', timeout=5000)
+                            await asyncio.sleep(1)  # Wait for animation
+                            
+                            # Process each comment and its replies
+                            main_comments = self.page.locator('article.comments-comment-entity:not(.comments-comment-entity--reply)')
+                            for i in range(await main_comments.count()):
+                                try:
+                                    comment = main_comments.nth(i)
+                                    
+                                    # Get comment author info
+                                    author_container = comment.locator('.comments-comment-meta__container')
+                                    author = {
+                                        "name": await author_container.locator('.comments-comment-meta__description-title').text_content(),
+                                        "profile_url": await author_container.locator('.comments-comment-meta__description-container').get_attribute('href'),
+                                        "title": await author_container.locator('.comments-comment-meta__description-subtitle').text_content(),
+                                        "image_url": await author_container.locator('.ivm-view-attr__img-wrapper img').get_attribute('src')
+                                    }
+                                    
+                                    # Get comment content
+                                    content = await comment.locator('.comments-comment-item__main-content').text_content()
+                                    timestamp = await comment.locator('time.comments-comment-meta__data').text_content()
+                                    
+                                    # Get reactions count
+                                    reactions_text = await comment.locator('.comments-comment-social-bar__reactions-count--cr').text_content()
+                                    reactions_count = int(''.join(filter(str.isdigit, reactions_text))) if reactions_text else 0
+                                    
+                                    # Handle "See previous replies"
+                                    replies = []
+                                    load_replies_button = comment.locator('button:has-text("See previous replies")')
+                                    if await load_replies_button.count() > 0:
+                                        await load_replies_button.click()
+                                        await asyncio.sleep(1)
+                                    
+                                    # Get all replies for this comment
+                                    reply_comments = comment.locator('article.comments-comment-entity--reply')
+                                    for j in range(await reply_comments.count()):
+                                        try:
+                                            reply = reply_comments.nth(j)
+                                            reply_data = {
+                                                "author": {
+                                                    "name": await reply.locator('.comments-comment-meta__description-title').text_content(),
+                                                    "profile_url": await reply.locator('.comments-comment-meta__description-container').get_attribute('href'),
+                                                    "title": await reply.locator('.comments-comment-meta__description-subtitle').text_content(),
+                                                    "image_url": await reply.locator('.ivm-view-attr__img-wrapper img').get_attribute('src')
+                                                },
+                                                "content": await reply.locator('.comments-comment-item__main-content').text_content(),
+                                                "timestamp": await reply.locator('time.comments-comment-meta__data').text_content(),
+                                            }
+                                            replies.append(reply_data)
+                                        except Exception as e:
+                                            logger.warning(f"Error extracting reply {j}: {e}")
+                                            continue
+                                    
+                                    comments.append({
+                                        "author": author,
+                                        "content": content.strip(),
+                                        "timestamp": timestamp.strip(),
+                                        "reactions_count": reactions_count,
+                                        "replies": replies
+                                    })
+                                    
+                                except Exception as e:
+                                    logger.warning(f"Error extracting comment {i}: {e}")
+                                    continue
+                            
+                            # Click "Load more comments" until all comments are loaded
+                            while True:
+                                load_more_button = self.page.locator('button.comments-comments-list__load-more-comments-button--cr')
+                                if await load_more_button.count() > 0 and await load_more_button.is_visible():
+                                    await load_more_button.click()
+                                    await asyncio.sleep(1)  # Wait for new comments to load
+                                    logger.info("Clicked load more comments button")
+                                else:
+                                    break
+                                
+                            # Now that all comments are loaded, process them
+                            await asyncio.sleep(1)  # Wait for final load
+                            
+                            # Extract comments
+                            comment_items = self.page.locator('.comments-comment-entity')
+                            
+                            async def extract_comment_data(comment):
+                                try:
+                                    # Extract basic comment info
+                                    name_elem = comment.locator('.comments-comment-meta__description-title')
+                                    content_elem = comment.locator('.comments-comment-item__main-content')
+                                    link_elem = comment.locator('.comments-comment-meta__description-container')
+                                    title_elem = comment.locator('.comments-comment-meta__description-subtitle')
+                                    time_elem = comment.locator('.comments-comment-meta__data >> time')
+                                    reactions_count_elem = comment.locator('.comments-comment-social-bar__reactions-count--cr')
+                                    
+                                    # Get reactions count and types if available
+                                    reactions_info = {
+                                        "count": 0,
+                                        "types": []
+                                    }
+                                    
+                                    if await reactions_count_elem.count() > 0:
+                                        count_text = await reactions_count_elem.text_content()
+                                        reactions_info["count"] = int(''.join(filter(str.isdigit, count_text))) if any(c.isdigit() for c in count_text) else 0
+                                        
+                                        # Extract reaction types from images
+                                        reaction_imgs = reactions_count_elem.locator('.reactions-icon')
+                                        for i in range(await reaction_imgs.count()):
+                                            img = reaction_imgs.nth(i)
+                                            reaction_type = await img.get_attribute('alt')
+                                            if reaction_type:
+                                                reactions_info["types"].append(reaction_type)
+                                    
+                                    # Build comment data structure
+                                    comment_data = {
+                                        "author": {
+                                            "name": await name_elem.text_content() if await name_elem.count() > 0 else "",
+                                            "profile_url": await link_elem.get_attribute('href') if await link_elem.count() > 0 else "",
+                                            "title": await title_elem.text_content() if await title_elem.count() > 0 else ""
+                                        },
+                                        "content": await content_elem.text_content() if await content_elem.count() > 0 else "",
+                                        "timestamp": await time_elem.text_content() if await time_elem.count() > 0 else "",
+                                        "reactions": reactions_info,
+                                        "replies": []
+                                    }
+                                    
+                                    # Check for replies
+                                    replies_list = comment.locator('.comments-replies-list')
+                                    if await replies_list.count() > 0:
+                                        # Check for "See previous replies" button
+                                        load_prev_button = replies_list.locator('button:has-text("See previous replies")')
+                                        if await load_prev_button.count() > 0:
+                                            try:
+                                                await load_prev_button.click()
+                                                await asyncio.sleep(1)  # Wait for previous replies to load
+                                                logger.info("Clicked 'See previous replies' button")
+                                            except Exception as e:
+                                                logger.warning(f"Error loading previous replies: {e}")
+                                        
+                                        # Extract all replies
+                                        reply_items = replies_list.locator('.comments-comment-entity--reply')
+                                        for i in range(await reply_items.count()):
+                                            reply = reply_items.nth(i)
+                                            reply_data = await extract_comment_data(reply)  # Recursively extract reply data
+                                            comment_data["replies"].append(reply_data)
+                                    
+                                    return comment_data
+                                except Exception as e:
+                                    logger.warning(f"Error extracting comment data: {e}")
+                                    return None
+                            
+                            # Process all top-level comments
+                            for i in range(await comment_items.count()):
+                                try:
+                                    comment = comment_items.nth(i)
+                                    if await comment.get_attribute('class') and 'comments-comment-entity--reply' not in await comment.get_attribute('class'):
+                                        comment_data = await extract_comment_data(comment)
+                                        if comment_data:
+                                            comments.append(comment_data)
+                                except Exception as e:
+                                    logger.warning(f"Error extracting comment {i}: {e}")
+                                    continue
+                            
+                            # Close comments section
+                            try:
+                                back_button = self.page.locator('button.comments-comment-box__collapse-button')
+                                if await back_button.count() > 0:
+                                    await back_button.click()
+                                    await asyncio.sleep(1)
+                            except Exception as e:
+                                logger.warning(f"Error closing comments: {e}")
+                                
+                        except Exception as e:
+                            logger.error(f"Error processing comments: {e}")
+                    
+                    # Prepare complete post data
+                    post_data = {
+                        "post_number": post_number,
+                        "keyword": keyword,
+                        "author": author_info,
+                        "content": post_content.strip(),
+                        "metadata": post_metadata,
+                        "engagement": {
+                            "total_likers": len(likers),
+                            "total_comments": len(comments),
+                            "likers": likers,
+                            "comments": comments
+                        }
+                    }
+                    
+                    # Save post data to JSON
+                    os.makedirs('posts/json', exist_ok=True)
+                    json_filename = f'posts/json/post_{keyword}_{post_number}_profiles.json'
+                    
+                    with open(json_filename, 'w', encoding='utf-8') as f:
+                        json.dump(post_data, f, indent=2, ensure_ascii=False)
+                    
+                    logger.info(f"Saved {len(profiles)} profiles to {json_filename}")
+                    
+                finally:
+                    # Always try to close the modal and restore container state
+                    await self.close_modal()
+                    await self._restore_container_state(container, post_number)
+                    await asyncio.sleep(1)  # Wait for UI to settle
+                
+                return post_data
+            
+            else:
+                logger.warning(f"No reactions button found for post {post_number}")
+                await self._restore_container_state(container, post_number)
+                return None
+                
+        except Exception as e:
+            logger.error(f"Error processing post {post_number}: {e}")
+            await self.close_modal()  # Try to close modal in case of error
+            return None
 
+    async def close_modal(self):
+        """Helper method to close the modal with retries"""
+        try:
+            # First try the specific close button
+            close_button = self.page.locator('button[data-test-modal-close-btn]')
+            if await close_button.count() > 0:
+                await close_button.click()
+            else:
+                # Fallback to generic dismiss button
+                dismiss_button = self.page.locator('button[aria-label="Dismiss"]')
+                if await dismiss_button.count() > 0:
+                    await dismiss_button.click()
+            
+            # Wait for modal to fully close
+            try:
+                await self.page.wait_for_selector('div.artdeco-modal__content', 
+                                                state='hidden', 
+                                                timeout=5000)
+                logger.info("Modal closed successfully")
+            except PlaywrightTimeoutError:
+                logger.warning("Modal may not have closed properly")
+            
+            # Additional pause to ensure modal is fully closed
+            await asyncio.sleep(1)
+            
+        except Exception as e:
+            logger.error(f"Error closing modal: {e}")
 
-# --- How to Run in Google Colab ---
-# 1. Install dependencies in a cell:
-#    !pip install playwright beautifulsoup4
-#    !playwright install
-# 2. Upload your 'cookies.json' file using the Colab file browser (left sidebar).
-#    Ensure it's in the root directory or update the path in `main_playwright`.
-# 3. Paste this entire Python code block into a single Colab cell.
-# 4. In a *new* Colab cell below the code cell, run the main function:
-#    await main_playwright()
+    async def _restore_container_state(self, container, post_number):
+        """Helper method to restore container state after processing"""
+        try:
+            await container.evaluate('''node => {
+                node.classList.remove('processing-container');
+                node.classList.add('highlight-container');
+            }''')
+            logger.info(f"Restored container state for post {post_number}")
+        except Exception as e:
+            logger.error(f"Error restoring container state: {e}")
 
-# --- To run as a standard Python script (.py file): ---
-if __name__ == "__main__":
-    # Check if an event loop is already running (less common for scripts)
+    async def search_posts(self, keywords: List[str], scroll_pause_time: int = 3, max_scrolls: int = 5):
+        """Search for posts using given keywords, scroll to bottom first, then process all posts."""
+        if not self.is_logged_in:
+            logger.error("Not logged in. Cannot search posts.")
+            return []
+
+        collected_urls = []
+
+        for keyword in keywords:
+            logger.info(f"Searching for posts with keyword: '{keyword}'")
+            search_url = f"https://www.linkedin.com/search/results/content/?keywords={keyword}&origin=GLOBAL_SEARCH_HEADER&sortBy=DATE"
+
+            try:
+                await self.page.goto(search_url, timeout=60000, wait_until='domcontentloaded')
+                await self.page.wait_for_selector('div.search-results-container', timeout=30000)
+                await asyncio.sleep(2)
+
+                # Add highlighting style
+                await self.page.evaluate('''
+                    if (!document.getElementById('highlight-style')) {
+                        const style = document.createElement('style');
+                        style.id = 'highlight-style';
+                        style.textContent = `
+                            .highlight-container {
+                                border: 3px solid #0a66c2 !important;
+                                background-color: rgba(10, 102, 194, 0.1) !important;
+                                transition: all 0.3s ease !important;
+                            }
+                            .processed-container {
+                                opacity: 0.5 !important;
+                            }
+                        `;
+                        document.head.appendChild(style);
+                    }
+                ''')
+
+                # First scroll to the bottom
+                logger.info("Scrolling to bottom to load all content...")
+                last_height = await self.page.evaluate('document.documentElement.scrollHeight')
+                scroll_attempts = 0
+                max_attempts = max_scrolls
+
+                while scroll_attempts < max_attempts:
+                    # Scroll to bottom
+                    await self.page.evaluate('window.scrollTo(0, document.documentElement.scrollHeight)')
+                    await asyncio.sleep(2)
+
+                    new_height = await self.page.evaluate('document.documentElement.scrollHeight')
+                    if new_height == last_height:
+                        # Wait longer at bottom to ensure all content is loaded
+                        logger.info("Reached bottom, waiting 10 seconds for final content...")
+                        await asyncio.sleep(10)
+                        
+                        # Final scroll check
+                        await self.page.evaluate('window.scrollTo(0, document.documentElement.scrollHeight)')
+                        await asyncio.sleep(2)
+                        final_height = await self.page.evaluate('document.documentElement.scrollHeight')
+                        
+                        if final_height == new_height:
+                            logger.info("No more new content loading. Starting to process posts...")
+                            break
+
+                    last_height = new_height
+                    scroll_attempts += 1
+                    logger.info(f"Scrolling... Attempt {scroll_attempts}/{max_attempts}")
+                    await asyncio.sleep(1)
+
+                # Now process all posts from top to bottom
+                logger.info("Processing all posts...")
+                await self.page.evaluate('window.scrollTo(0, 0)')
+                await asyncio.sleep(2)
+
+                # Process all containers in batches
+                containers = self.page.locator('div.fie-impression-container')
+                total_containers = await containers.count()
+                logger.info(f"Found {total_containers} total posts to process")
+
+                processed_containers = set()
+                batch_size = 5
+                batch_urls = []
+
+                # Process containers in batches
+                for i in range(0, total_containers, batch_size):
+                    batch_end = min(i + batch_size, total_containers)
+                    logger.info(f"Processing batch {i//batch_size + 1}, posts {i+1} to {batch_end}")
+
+                    # Process each container in the current batch
+                    for j in range(i, batch_end):
+                        try:
+                            container = containers.nth(j)
+                            
+                            # Get container details for deduplication
+                            container_html = await container.evaluate('node => node.outerHTML')
+                            container_id = hash(container_html)
+
+                            if container_id in processed_containers:
+                                continue
+
+                            if await container.is_visible():
+                                # Process the post and save to JSON
+                                post_data = await self.process_post_html(container_html, j + 1, keyword)
+                                
+                                # Add highlight class
+                                await container.evaluate('''node => {
+                                    node.classList.add('highlight-container');
+                                    node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }''')
+
+                                if post_data and post_data.get('post_url'):
+                                    batch_urls.append(post_data['post_url'])
+
+                                processed_containers.add(container_id)
+                                await asyncio.sleep(0.5)  # Short pause for visibility
+
+                        except Exception as e:
+                            logger.warning(f"Error processing container {j+1}: {e}")
+                            continue
+
+                    # Short pause between batches
+                    await asyncio.sleep(1)
+
+                collected_urls.extend(batch_urls)
+                logger.info(f"Finished processing {len(processed_containers)} unique posts for keyword '{keyword}'")
+
+            except Exception as e:
+                logger.error(f"Error searching posts for keyword '{keyword}': {e}")
+
+        # Remove duplicates from final collection
+        collected_urls = list(set(collected_urls))
+        logger.info(f"Total unique posts collected across all keywords: {len(collected_urls)}")
+        return collected_urls
+
+    
+    async def close(self):
+        """Clean up resources"""
+        if self.page:
+            await self.page.close()
+        if self.context:
+            await self.context.close()
+        if self.browser:
+            await self.browser.close()
+
+async def main():
+    """Main execution function"""
+    # Initialize the automation
+    linkedin = LinkedInAutomation()
+    
     try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:  # No running event loop
-        loop = None
+        # Setup
+        if not await linkedin.initialize():
+            logger.error("Failed to initialize LinkedIn automation")
+            return
 
-    if loop and loop.is_running():
-        logger.info("Async event loop already running. Scheduling task.")
-        # Schedule the task in the existing loop
-        tsk = loop.create_task(main_playwright())
-        # Note: In a script context, you might need to run the loop until the task completes
-        # loop.run_until_complete(tsk) # This depends on the outer async context
-    else:
-        logger.info("Starting new async event loop for main_playwright.")
-        # Start a new event loop to run the async function
-        asyncio.run(main_playwright())
+        if not await linkedin.load_cookies():
+            logger.error("Failed to load cookies")
+            return
+
+        if not await linkedin.verify_login():
+            logger.error("Failed to verify login")
+            return
+
+        # Search keywords
+        search_keywords = [
+            "Maxim AI",
+            # "AI Quality",
+            # "AI Agent Evaluation",
+            # "LLM Evaluation", # You can add more specific or broader terms
+            # "Responsible AI"
+        ]
+
+        # Search for posts - targeting around 100 posts
+        # The search_posts method already has target_post_count parameter
+        post_urls = await linkedin.search_posts(search_keywords)
+        print(f"Collected {len(post_urls)} post URLs.")
+        if not post_urls:
+            logger.error("No post URLs collected.")
+            return
+
+    except Exception as e:
+        logger.error(f"Main execution error: {e}")
+    finally:
+        await linkedin.close()
+
+if __name__ == "__main__":
+    asyncio.run(main())

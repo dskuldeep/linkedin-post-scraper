@@ -1,0 +1,368 @@
+{
+  "post_number": 2,
+  "keyword": "AI Evals",
+  "author": {
+    "name": "\n              \n                Hamel H.Hamel H.\n              \n                \n                   • 3rd+3rd+\n                \n            ",
+    "profile_url": "https://www.linkedin.com/in/hamelhusain",
+    "title": "\n                ML Engineer with 20 years of experience helping companies with AIML Engineer with 20 years of experience helping companies with AI\n              ",
+    "image_url": "https://media.licdn.com/dms/image/v2/C5603AQGoyHYtA2QIXw/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1572471557626?e=1752710400&v=beta&t=AX0zTciqpBzXLHoYimu7r1Q2-4wtMTGVlQh_nuEEU6o"
+  },
+  "content": "Over the past 2 months, we held 7 lightning lessons on AI Evals.  You can find ALL the slides and recordings in the below post.  List of lessons:1. LLM Evals: Common Mistakes2. The Evals That Made GitHub Copilot Happen3. Stop Managing AI Projects Like Traditional Software4. Error Analysis: The AI Engineer’s Best ROI5. Hybrid Search Is Just The Beginning: Optimizing the R in RAG6. Optimizing Structured Data Retrieval With Evals7. WTH is an AI PM?Which lessons did you find most helpful?  Reply with your comments!",
+  "metadata": {
+    "post_url": "https://www.linkedin.com/in/hamelhusain",
+    "timestamp": "\n              1d • \n      \n     1 day ago • Visible to anyone on or off LinkedIn\n            ",
+    "visibility": "public"
+  },
+  "engagement": {
+    "total_likers": 66,
+    "total_comments": 1,
+    "likers": [
+      {
+        "url": "https://www.linkedin.com/in/ACoAAC55UPUBzfYr-VVD3IJn5M_JO1Ba0nUUrLk",
+        "name": "Rok Popov Ledinski",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAOxS10BHx3m1BxcXM9gdIq2FdlVXMr3TQw",
+        "name": "Xiaoze Jin",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAEZJCXMBct6jw73CD6rbfNwou-Duf3FoEuk",
+        "name": "Paul E.",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAFTe-IBLCueLFQRJitTH9HHZEesp_fYn-c",
+        "name": "Antoine McGrath",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAYgD8kBqY4PbXlTNAZpqSfi6yQsU5rKbYg",
+        "name": "Pruthvi Gowda",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAB-6KeoB9908Ath62wiqrO0RBhWFM1u7GDk",
+        "name": "Naveena C.",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAACac_ZABYULkuikobuKKMCEx4T3PLJgHDLQ",
+        "name": "Erin LeDell",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAAj_XABVwt2yx33Lhs63K8BxzevXhJIsng",
+        "name": "G. Hussain Chinoy",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAACH_RcMBmfaPqPEB7jFqfdvd83G7MGcpT8E",
+        "name": "Abhishek Pawar",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAABBlMLoBqJoRu1-qvJMxar9ldynjUaHdQwg",
+        "name": "Urvi Sengar",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAwqWaMBD4RY6y5w3bxGzPKcURH0dEWlF6Y",
+        "name": "Qiang Zhang",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAklv8YBRdrmnQgo17b69eUVFe2jMTL1V2M",
+        "name": "Shaili Guru",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAA2Gw5oBpLB9slEkTtae7xE9Eef0t5Mj3rQ",
+        "name": "Manas Bundele",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAi-TEYBkbjEFaJQOcA1QrxGE7heTf5_Dto",
+        "name": "Anshuman Dewangan",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAABLa6a4BTgu41b0-_1lrEamDOnZkeEMLyj0",
+        "name": "Daman S.",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAA2ZcUBGh2PItb3xkIdeoDvT8cgaznjUIo",
+        "name": "Angie Li",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAABCh8K0BLnNavamATdlrq_HrNJLPK73Etr0",
+        "name": "Kajal Patil",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAADbh_EgBR42XEswRJmRrPe2MuSXRdagCA70",
+        "name": "Mohamed Adel Musallam",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAABTIzY0BYgRJh6z1A20ZRx5aiI7Ga1TGk-k",
+        "name": "Anshu Singh",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAATZn-ABdasGkqYxZqE_unqe5lScpe75Ks0",
+        "name": "Dmitry Sidorenko",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAgNo7UBYPdWK8iuLqMFmtRoolSA4cvzppc",
+        "name": "Reza Yousefzadeh",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAABqQobUBo6s6ydymMtN35fSDYlhfpbQfahc",
+        "name": "Max F.",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAADVuh24BZmUQg_JOC9Dt6MywHHSME7iJiwQ",
+        "name": "Sai Gayatri Prasad Peri",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAACFM8EBLZexJY2LsnDDJWRSQskVuZaziQs",
+        "name": "Laurian Gridinoc",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAPIstIBlu7_qgUNtHo10scLCH_dJKzmjVI",
+        "name": "Jason Kabaker",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAACkSouIB2IzCm45L5FSXclPyEXJXC-83pIM",
+        "name": "Sina Tayebati",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAFAhC4BkzaRqDi7kOl0U-T-o_BN9vczjN8",
+        "name": "Arnab Biswas",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAATxMqMBieOJva9jUXDZ972O7w3kQCvVIhI",
+        "name": "Yeshwanthram Devanathan",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAABUKlcB9mZPCtHM30l4sLOSg2EtrjIoPsM",
+        "name": "Jasmine Wang",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAKYu3UB9k8HfMxlSAib3ew6YjX2x3FOGuY",
+        "name": "Allan Thompson",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAACkG_z8Bpbo5wl7a5JrQIyo3qB6c6p7TNdM",
+        "name": "Bavalpreet Singh",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAHs5QsBtmCj2REFiLPkgUlG1fkVz5P0VaE",
+        "name": "Rita V.",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAErnNxEBsJfm4Hb2fclH7T1zTq5sC6G1YBc",
+        "name": "Martine L.",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAAc9S8BlBuEdwhbffv61YO6rPgvzriche4",
+        "name": "Derek W.",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAABZZ0y0BFDzECMdhiSO8JnM6EjKC5lfLO38",
+        "name": "Rajaswa Patil",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAABdEpcMBL57JSXmX23Hqb5M_xlrbNOTynAw",
+        "name": "Abby Morgan",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAB3R-OYBO6GIUCaElIVNcIJLjw4uXOP8rXk",
+        "name": "Rohit N.",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAMaHcwBVsN3ZEHGZICd3f4mDgTIgYlFveA",
+        "name": "Gautham Beeraiah",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAAh-sMB_fP7fobxU8A7CsaXncwfpfkdepM",
+        "name": "Druce Vertes",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAA3DblgB0Iu4jkNXTGyCQ_nwmXmL7ykSgRo",
+        "name": "Vlad Zelinschi",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAA03KAB9V75sXb8YiyaYbbPF2T69ckNB6A",
+        "name": "Vlad Iliescu",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAC9vnEIBvfOrAY0JMNaua8E5Cf3--AT6IEs",
+        "name": "Zaur Samadov",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAClZPNQBRxjPXpvG_c7Wbk9VfkLg1lnh0u0",
+        "name": "Abhinav _",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAxhkl0BHzEshonv1Mzrygtvi8ge5F6mPWg",
+        "name": "Rachna R.",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAABtLGCoBtHydITH1Vj_wrb5jKW24baEaDf4",
+        "name": "Vinayak Jhunjhunwala",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAP57tUB2UX7vddn2OcxTUqBOa7ZaK4UGxE",
+        "name": "Ray Bell, Ph.D., PMP",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAcrwqQBkoyK8TI11YbWMK6egsZtMUA2GQM",
+        "name": "Andrei Bâcu",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAB0XTwcBz_5trHn4M0ErPs-Q6zSA4DnfICs",
+        "name": "Praneeth Paikray",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAZGtDkBpYAHFy8W-0qKmajs2D0-2x6c5WM",
+        "name": "Marlene D.",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAAHQkcBLc7Xg0Qg1VYQMXwTox59Xk7HKWQ",
+        "name": "Sriram Raghavendran",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAACBD3sBtwR7TaixlIvJoNUyVdN9VnemMmE",
+        "name": "Pierre-André Galmes",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAENUncBKZLzKqAD51c5xhZxCxWu3Mx1LSA",
+        "name": "Deepak Pandian",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAACkxBa0BS0w6J8eRbwJjTZkyfXYWmuKt9A4",
+        "name": "Manan Gupta",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAO65TIBrqO2LlaiMcsPzJJjG7wVDlGTDog",
+        "name": "Sasikanth Kotti",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAACPoiH4Bpq5Xc7i4GO4HgHU7B1vK5c-GH6s",
+        "name": "Karl Asger Juhl",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAhoPGwB_kogfL_Yxl704HnL5RCo2fKQZO4",
+        "name": "Šimon Podhajský",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAyXorcBWLmnvFiEFUvIRtvucDipohqb8iw",
+        "name": "Lena Hall",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAABZaGCMBUUmxht3VJbTe-vDGf6kHQExvqwE",
+        "name": "Rachitt Shah",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAW3EkcBVrQt9FZqXgYSpccn09lTF6Wecpg",
+        "name": "Shamsher Ansari",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAE8E3kBkOkxvXEewg_QKa5Hi5Osma8TN80",
+        "name": "Andrew Savala",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAABVn7G8B0qb5TBjbKymPy52CcllrQ28YqLA",
+        "name": "Pranav Nair",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAACEZsIgB_LC5ugb0uc7kBx2FoD1JGscblqE",
+        "name": "Kiran Pendem",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAQh5J8BVHPUnWqyIY2fHcWHvM3QyR_xE08",
+        "name": "Pavan Tikkani",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAACIqwcBxq_f8RMUnUpGMNHGGLxuc-OnpAw",
+        "name": "Cruz Gamboa",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAbtlH4BU_NK0jUZpXzADFqKOqw4RS_HsuY",
+        "name": "Aman Khan",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAA-MCsQBocfi6FVG5WY6ilByO5NFM2YEOOI",
+        "name": "Shashwat Chavan",
+        "title": ""
+      }
+    ],
+    "comments": [
+      {
+        "author": {
+          "name": "\n              Max F.\n            ",
+          "profile_url": "https://www.linkedin.com/in/max-frolloff",
+          "title": "\n              AI/ML Researcher\n            "
+        },
+        "content": "\n                      \n    Great topics! Very insightful lessons!\n\n                    ",
+        "timestamp": "",
+        "reactions": {
+          "count": 0,
+          "types": []
+        },
+        "replies": []
+      }
+    ]
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "post_number": 9,
+  "keyword": "AI Evals",
+  "author": {
+    "name": "\n              \n                Jenna RebackJenna Reback\n              \n                \n                   • 3rd+3rd+\n                \n            ",
+    "profile_url": "https://www.linkedin.com/in/jenna-reback-14b811132",
+    "title": "\n                Founder @ Blueberry Creative Studios | Thought Leadership + Brand Strategy for Businesses and EntrepreneursFounder @ Blueberry Creative Studios | Thought Leadership + Brand Strategy for Businesses and Entrepreneurs\n              ",
+    "image_url": "https://media.licdn.com/dms/image/v2/D5603AQGw-7HRMAZk6w/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1708031620881?e=1752710400&v=beta&t=FV27D6StbFFWLSuVzTOaRlWJ63hvOoYSmEqYjzBga7k"
+  },
+  "content": "🤖 I’ll admit it: I use AI tools to help me draft emails and DMs.Not for everything. But when it’s sensitive, awkward, or high-stakes?🖖 Call in the Borg.Am I ceding my humanity to the robots? Or am I just acknowledging that evolutionarily none of us was meant to:🧠 Jump between projects every 15 minutes 👥 Spend all day engaging only with people we've never met IRL  📝 Organically craft the perfect, not-misinterpret-able messaging on the fly when we barely have time to refill our Nalgenes between meetings hashtag#hydrationgoalsHere’s the thing: ✍️ I still tweak and personalize every message. I’m not outsourcing my voice—I’m allowing myself to speak at the pace of business...🤞 ... I think? 😬 So drop your vote:  Am I being creepy or pragmatic?  hashtag#AIWriting hashtag#CommunicationFatigue hashtag#DigitalOverload hashtag#WeAretheBorg",
+  "metadata": {
+    "post_url": "https://www.linkedin.com/in/jenna-reback-14b811132",
+    "timestamp": "\n              1w • Edited • \n      \n     1 week ago • Edited • Visible to anyone on or off LinkedIn\n            ",
+    "visibility": "public"
+  },
+  "engagement": {
+    "total_likers": 5,
+    "total_comments": 4,
+    "likers": [
+      {
+        "url": "https://www.linkedin.com/in/ACoAAC7C8pkBQUn2ZWPpPhNhsJAW59eM8MU6eW4",
+        "name": "Nazam Hussain",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAABSZYBPl9T00BUwmZmgG_Gjt9t_tCUMpI",
+        "name": "Robert Kohler",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAABbxNgcBh7gd4Bq38FARfrA0W4JNDGnuMyo",
+        "name": "Matt Reback",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAACCDGIsBUEV9ksqkMmrIB-cRbOdZ9bzj9-I",
+        "name": "Jenna Reback",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAHwJ-UB3W_nFWy-quBSq36UD4_Wid4OxKU",
+        "name": "Edward H Cassas",
+        "title": ""
+      }
+    ],
+    "comments": [
+      {
+        "author": {
+          "name": "\n              William Willis\n            ",
+          "profile_url": "https://www.linkedin.com/in/williamwillis",
+          "title": "\n              Transformative Leader | Community Advocate & Speaker | Mentor & Coach | Board Member | AI & ML Strategist | Program, Process & Project Management Expert | Customer/Client Success Innovator | Business Strategist\n            ",
+          "image_url": "https://media.licdn.com/dms/image/v2/D4E03AQFxqz55vQjASw/profile-displayphoto-shrink_100_100/B4EZVs__NqH0Ac-/0/1741290468635?e=1752710400&v=beta&t=XEri7RDPB8rcENl3cwAuxGQixhhP1nfYKR929qdLRj0"
+        },
+        "content": "I rely on ChatGPT, Claude, and Perplexity almost every hour, these tools are essential to how I brainstorm ideas, plan my calendar, draft and refine messages, and rewrite emails. I’ve especially gotten into ChatGPT Projects for organizing workflows and using its deep research capabilities to dig into complex topics.",
+        "timestamp": "1w",
+        "reactions_count": 1,
+        "replies": []
+      },
+      {
+        "author": {
+          "name": "\n              Max F.\n            ",
+          "profile_url": "https://www.linkedin.com/in/max-frolloff",
+          "title": "\n              AI/ML Researcher\n            "
+        },
+        "content": "\n                      \n    Great topics! Very insightful lessons!\n\n                    ",
+        "timestamp": "",
+        "reactions": {
+          "count": 0,
+          "types": []
+        },
+        "replies": []
+      },
+      {
+        "author": {
+          "name": "\n              William Willis\n            ",
+          "profile_url": "https://www.linkedin.com/in/williamwillis",
+          "title": "\n              Transformative Leader | Community Advocate & Speaker | Mentor & Coach | Board Member | AI & ML Strategist | Program, Process & Project Management Expert | Customer/Client Success Innovator | Business Strategist\n            "
+        },
+        "content": "\n                      \n    I rely on ChatGPT, Claude, and Perplexity almost every hour, these tools are essential to how I brainstorm ideas, plan my calendar, draft and refine messages, and rewrite emails. I’ve especially gotten into ChatGPT Projects for organizing workflows and using its deep research capabilities to dig into complex topics.\n\n                    ",
+        "timestamp": "",
+        "reactions": {
+          "count": 1,
+          "types": [
+            "like"
+          ]
+        },
+        "replies": []
+      },
+      {
+        "author": {
+          "name": "\n              Megha Chouhan\n            ",
+          "profile_url": "https://www.linkedin.com/in/megha371",
+          "title": "\n              Technical Writer @LLUMO AI\n            "
+        },
+        "content": "\n                      \n    Too many teams rush to deploy agents without a solid evaluation framework—and that's where things start to break in production.At LLUMO AI, we take this a step further with Eval LM, designed specifically for real-time evaluation of agent behavior, output consistency, and interaction quality across workflows.Great to see tools like MLflow and LangChain Evals getting mentioned. The next leap? Tying evaluation directly to business outcomes—something we're seeing more enterprises demand.Appreciate this clear, actionable post.Checkout LLUMO AI Newsletter-Subscribe on LinkedIn https://www.linkedin.com/build-relation/newsletter-follow?entityUrn=7264618895892758528\n\n                    ",
+        "timestamp": "",
+        "reactions": {
+          "count": 0,
+          "types": []
+        },
+        "replies": []
+      }
+    ]
+  }
+}
