@@ -1,0 +1,68 @@
+{
+  "post_number": 141,
+  "keyword": "Maxim AI",
+  "author": {
+    "name": "\n              \n                Madhushree KarthikeyanMadhushree Karthikeyan\n              \n                \n                   • 3rd+3rd+\n                \n            ",
+    "profile_url": "https://www.linkedin.com/in/madhushree-karthikeyan-3aa48b338",
+    "title": "\n                Student at SRM IST ChennaiStudent at SRM IST Chennai\n              ",
+    "image_url": "https://media.licdn.com/dms/image/v2/D5603AQE2JQWOEbX-YA/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1731482545669?e=1753315200&v=beta&t=_FcdTf3uvL-G4IsQ_p7nFjoL_rhY7GE29Keq9PU84cw"
+  },
+  "content": "As part of our AI coursework this semester, we were tasked with applying classroom concepts to solve real-world problems — and here’s what we created.With readers facing an overwhelming number of book choices, finding the right read often becomes a frustrating task. So we built an intelligent AI-powered book recommendation system that tailors suggestions to each reader’s preferences.Our AI leverages:📖 Content-Based Filtering to recommend books based on genre, author, and keywords 🧠 Scikit-learn for machine learning algorithms 📊 Pandas & NumPy for data handling and processing 🌐 A lightweight backend built with Flask and a clean frontend using HTML and CSS 📚 Kaggle book datasets to train and test the systemThe system delivers personalized recommendations, surfaces hidden literary gems, and significantly reduces the time users spend searching for their next book. Users reported a more satisfying and engaging reading experience.This project not only demonstrates the power of AI in enhancing everyday tasks like reading but also shows how core computer science concepts — like feature extraction and real-time personalization — can transform digital experiences.Huge thanks to my amazing teammates Akshaya KV and Kavyadharshini M for bringing this idea to life!hashtag#AI hashtag#MachineLearning hashtag#BookRecommendations hashtag#Python hashtag#Flask hashtag#EdTech hashtag#StudentProjects hashtag#Personalization hashtag#NLP",
+  "metadata": {
+    "post_url": "https://www.linkedin.com/in/madhushree-karthikeyan-3aa48b338",
+    "timestamp": "\n              1w • \n      \n     1 week ago • Visible to anyone on or off LinkedIn\n            ",
+    "visibility": "public"
+  },
+  "engagement": {
+    "total_likers": 9,
+    "total_comments": 0,
+    "likers": [
+      {
+        "url": "https://www.linkedin.com/in/ACoAAErgaakB57tgUmXKlrIrkNL7dI5xwB_kMxE",
+        "name": "Jaitasree H",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAEW44mIB91zU7EbcSHYi-sv8xUeWPkD1vbE",
+        "name": "ADITYA PRASAD",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAEWvDJkBN9L1kCQKbLdpJfEBPQvhEVDuajs",
+        "name": "Ashneet Jha",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAACt7268ByC4Zj5jj0nF7yzX92Bs2XTrKpvI",
+        "name": "Kailash Saravanan",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAFVKvXUB08iYIkf-BvhTnK3vfSy3VY-O-Ro",
+        "name": "Vedant PS",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAFRg9PABy3i5qQLUctXJLaN200v0rWyn_xc",
+        "name": "Akshaya Sreekumar",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAEW272QBtBNQRgFWxt0vE6-6zFwOM2dmrfQ",
+        "name": "Ruchir Singh",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAEW3nY8B0ONPvS-osSJDNscRjj_KXOSKRoo",
+        "name": "Janav Gandhi",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAJCwrkBEDvWLsDWDgZ7ULXDL64jLQCRKm4",
+        "name": "Karthikeyan Kailasam",
+        "title": ""
+      }
+    ],
+    "comments": []
+  }
+}

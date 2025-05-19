@@ -248,125 +248,70 @@ class LinkedInAutomation:
             logger.error(f"Error extracting engagement data: {e}")
             return post_data
 
-    async def process_post_html(self, html: str, post_number: int, keyword: str) -> Dict:
-        """
-        Extract specific information from the LinkedIn post HTML.
-        
-        Args:
-            html: The raw HTML string of the post container
-            post_number: A unique number for this post
-            keyword: The search keyword that found this post
-        """
+    async def process_post_html(self, container, post_number: int, keyword: str) -> Dict:
         try:
-            # Remove highlight before processing
-            container = self.page.locator('div.fie-impression-container').nth(post_number - 1)
+            # Get unique post id for deduplication
+            post_id = await container.get_attribute('data-urn')
             await container.evaluate('''node => {
                 node.classList.remove('highlight-container');
                 node.classList.add('processing-container');
             }''')
-
-            # Find and click the reactions button directly in the container
+            # Extract post URL and author info
+            post_url_elem = container.locator('.update-components-actor__meta-link')
+            post_url = await post_url_elem.get_attribute('href') if await post_url_elem.count() > 0 else None
+            post_url = post_url.split('?')[0] if post_url else None
+            author_info = {
+                "name": await container.locator('.update-components-actor__title').text_content(),
+                "profile_url": post_url,
+                "title": await container.locator('.update-components-actor__description').text_content(),
+                "image_url": await container.locator('.update-components-actor__avatar-image').get_attribute('src')
+            }
+            post_metadata = {
+                "post_url": post_url,
+                "timestamp": await container.locator('.update-components-actor__sub-description').text_content(),
+                "visibility": "public" if await container.locator('li-icon[type="globe-americas"]').count() > 0 else "private"
+            }
+            content_elem = container.locator('.update-components-text')
+            post_content = await content_elem.text_content() if await content_elem.count() > 0 else ""
+            # Process reactions (keep your existing logic here)
+            likers = []
             reactions_button = container.locator('button[data-reaction-details]')
-            
             if await reactions_button.count() > 0:
-                logger.info(f"Found reactions button for post {post_number}")
-                profiles = []
-                
                 try:
-                    # Scroll the button into view and click
-                    await reactions_button.scroll_into_view_if_needed()
-                    await asyncio.sleep(1)  # Wait for smooth scrolling
                     await reactions_button.click()
-                    
-                    # Wait for modal with timeout
-                    try:
-                        await self.page.wait_for_selector('div.artdeco-modal__content', timeout=5000)
-                        logger.info("Modal opened successfully")
-                    except PlaywrightTimeoutError:
-                        logger.error("Modal failed to open within timeout")
-                        await self._restore_container_state(container, post_number)
-                        return None
-                    
-                    # Wait for profiles to load
-                    try:
-                        await self.page.wait_for_selector('.social-details-reactors-tab-body-list-item', timeout=5000)
-                    except PlaywrightTimeoutError:
-                        logger.error("Profile list failed to load within timeout")
-                        await self.close_modal()
-                        await self._restore_container_state(container, post_number)
-                        return None
-                    
-                    # Extract post URL and post author information
-                    post_url = await container.locator('.update-components-actor__meta-link').get_attribute('href')
-                    post_url = post_url.split('?')[0] if post_url else None  # Remove tracking parameters
-                    
-                    author_info = {
-                        "name": await container.locator('.update-components-actor__title').text_content(),
-                        "profile_url": post_url,
-                        "title": await container.locator('.update-components-actor__description').text_content(),
-                        "image_url": await container.locator('.update-components-actor__avatar-image').get_attribute('src')
-                    }
-                    
-                    # Extract post metadata
-                    post_metadata = {
-                        "post_url": post_url,
-                        "timestamp": await container.locator('.update-components-actor__sub-description').text_content(),
-                        "visibility": "public" if await container.locator('li-icon[type="globe-americas"]').count() > 0 else "private"
-                    }
-                    
-                    # Extract post content
-                    content_elem = container.locator('.update-components-text')
-                    post_content = await content_elem.text_content() if await content_elem.count() > 0 else ""
-                    
-                    # Extract profiles of people who liked the post
-                    # First scroll the modal to load all profiles
+                    await self.page.wait_for_selector('div.artdeco-modal__content', timeout=5000)
+                    # Scroll modal to load all profiles (indefinite, up to 300 profiles)
                     modal = self.page.locator('div.artdeco-modal__content')
                     last_height = 0
                     scroll_attempts = 0
-                    max_scroll_attempts = 20  # Increased to ensure we load more profiles
-                    
-                    logger.info("Scrolling modal to load all profiles...")
-                    while scroll_attempts < max_scroll_attempts:
-                        # Get current height
+                    max_profiles = 500
+                    while True:
                         current_height = await modal.evaluate('el => el.scrollHeight')
-                        
-                        # Break if no more content
                         if current_height == last_height:
-                            logger.info(f"No more profiles to load after {scroll_attempts} scrolls")
                             break
-                        
-                        # Scroll and wait for new content
                         await modal.evaluate('el => el.scrollTo(0, el.scrollHeight)')
-                        await asyncio.sleep(1)  # Wait for content to load
-                        
-                        # Update height and counter
+                        await asyncio.sleep(1)
                         last_height = current_height
+                        # Stop if we've loaded 500 or more profiles
+                        profile_container = self.page.locator('.social-details-reactors-tab-body-list-item')
+                        if await profile_container.count() >= max_profiles:
+                            break
                         scroll_attempts += 1
-                        logger.info(f"Modal scroll attempt {scroll_attempts}/{max_scroll_attempts}")
-                    
-                    # Now extract all loaded profiles
-                    await asyncio.sleep(1)  # Wait for final content to settle
+                    # Extract likers
                     profile_container = self.page.locator('.social-details-reactors-tab-body-list-item')
-                    total_profiles = await profile_container.count()
-                    logger.info(f"Found {total_profiles} profiles to extract")
-                    likers = []
-                    
-                    for i in range(total_profiles):
+                    for i in range(await profile_container.count()):
                         try:
                             item = profile_container.nth(i)
                             link_elem = item.locator('a.link-without-hover-state')
                             name_elem = item.locator('.artdeco-entity-lockup__title')
                             title_elem = item.locator('.artdeco-entity-lockup__subtitle')
-                            
                             if await link_elem.count() > 0:
                                 url = await link_elem.get_attribute('href')
                                 name = await name_elem.text_content() if await name_elem.count() > 0 else ""
                                 title = await title_elem.text_content() if await title_elem.count() > 0 else ""
-                                
                                 if url:
-                                    # Clean up the name - remove "View X's profile" text
                                     clean_name = name.split("View")[0].strip() if "View" in name else name.strip()
-                                    clean_url = url.split('?')[0]  # Remove tracking parameters
+                                    clean_url = url.split('?')[0]
                                     likers.append({
                                         "url": clean_url,
                                         "name": clean_name,
@@ -375,239 +320,170 @@ class LinkedInAutomation:
                         except Exception as e:
                             logger.warning(f"Error extracting liker profile {i}: {e}")
                             continue
-                    
-                    # Close the reactions modal before getting comments
                     await self.close_modal()
-                    await asyncio.sleep(2)  # Increased wait time to ensure modal is fully closed
-                    
-                    # Extract comments and commenters
-                    comments = []
-                    comments_button = container.locator('button.social-details-social-counts__count-value:has-text("comment")')
-                    if await comments_button.count() > 0:
-                        try:
-                            # Extract number of comments from button text
-                            comments_text = await comments_button.text_content()
-                            total_comments = int(''.join(filter(str.isdigit, comments_text))) if comments_text else 0
-                            logger.info(f"Found {total_comments} comments to process")
-                            
-                            # Make sure we can see the comments button
-                            await comments_button.scroll_into_view_if_needed()
-                            await asyncio.sleep(1)
-                            
-                            # Click and wait for comments
-                            await comments_button.click()
-                            logger.info("Clicked comments button, waiting for comments to load...")
-                            await self.page.wait_for_selector('.comments-comment-list__container', timeout=5000)
-                            await asyncio.sleep(1)  # Wait for animation
-                            
-                            # Process each comment and its replies
-                            main_comments = self.page.locator('article.comments-comment-entity:not(.comments-comment-entity--reply)')
-                            for i in range(await main_comments.count()):
-                                try:
-                                    comment = main_comments.nth(i)
-                                    
-                                    # Get comment author info
-                                    author_container = comment.locator('.comments-comment-meta__container')
-                                    author = {
-                                        "name": await author_container.locator('.comments-comment-meta__description-title').text_content(),
-                                        "profile_url": await author_container.locator('.comments-comment-meta__description-container').get_attribute('href'),
-                                        "title": await author_container.locator('.comments-comment-meta__description-subtitle').text_content(),
-                                        "image_url": await author_container.locator('.ivm-view-attr__img-wrapper img').get_attribute('src')
-                                    }
-                                    
-                                    # Get comment content
-                                    content = await comment.locator('.comments-comment-item__main-content').text_content()
-                                    timestamp = await comment.locator('time.comments-comment-meta__data').text_content()
-                                    
-                                    # Get reactions count
-                                    reactions_text = await comment.locator('.comments-comment-social-bar__reactions-count--cr').text_content()
-                                    reactions_count = int(''.join(filter(str.isdigit, reactions_text))) if reactions_text else 0
-                                    
-                                    # Handle "See previous replies"
-                                    replies = []
-                                    load_replies_button = comment.locator('button:has-text("See previous replies")')
-                                    if await load_replies_button.count() > 0:
-                                        await load_replies_button.click()
-                                        await asyncio.sleep(1)
-                                    
-                                    # Get all replies for this comment
-                                    reply_comments = comment.locator('article.comments-comment-entity--reply')
-                                    for j in range(await reply_comments.count()):
-                                        try:
-                                            reply = reply_comments.nth(j)
-                                            reply_data = {
-                                                "author": {
-                                                    "name": await reply.locator('.comments-comment-meta__description-title').text_content(),
-                                                    "profile_url": await reply.locator('.comments-comment-meta__description-container').get_attribute('href'),
-                                                    "title": await reply.locator('.comments-comment-meta__description-subtitle').text_content(),
-                                                    "image_url": await reply.locator('.ivm-view-attr__img-wrapper img').get_attribute('src')
-                                                },
-                                                "content": await reply.locator('.comments-comment-item__main-content').text_content(),
-                                                "timestamp": await reply.locator('time.comments-comment-meta__data').text_content(),
-                                            }
-                                            replies.append(reply_data)
-                                        except Exception as e:
-                                            logger.warning(f"Error extracting reply {j}: {e}")
-                                            continue
-                                    
-                                    comments.append({
-                                        "author": author,
-                                        "content": content.strip(),
-                                        "timestamp": timestamp.strip(),
-                                        "reactions_count": reactions_count,
-                                        "replies": replies
-                                    })
-                                    
-                                except Exception as e:
-                                    logger.warning(f"Error extracting comment {i}: {e}")
-                                    continue
-                            
-                            # Click "Load more comments" until all comments are loaded
-                            while True:
-                                load_more_button = self.page.locator('button.comments-comments-list__load-more-comments-button--cr')
-                                if await load_more_button.count() > 0 and await load_more_button.is_visible():
-                                    await load_more_button.click()
-                                    await asyncio.sleep(1)  # Wait for new comments to load
-                                    logger.info("Clicked load more comments button")
-                                else:
-                                    break
-                                
-                            # Now that all comments are loaded, process them
-                            await asyncio.sleep(1)  # Wait for final load
-                            
-                            # Extract comments
-                            comment_items = self.page.locator('.comments-comment-entity')
-                            
-                            async def extract_comment_data(comment):
-                                try:
-                                    # Extract basic comment info
-                                    name_elem = comment.locator('.comments-comment-meta__description-title')
-                                    content_elem = comment.locator('.comments-comment-item__main-content')
-                                    link_elem = comment.locator('.comments-comment-meta__description-container')
-                                    title_elem = comment.locator('.comments-comment-meta__description-subtitle')
-                                    time_elem = comment.locator('.comments-comment-meta__data >> time')
-                                    reactions_count_elem = comment.locator('.comments-comment-social-bar__reactions-count--cr')
-                                    
-                                    # Get reactions count and types if available
-                                    reactions_info = {
-                                        "count": 0,
-                                        "types": []
-                                    }
-                                    
-                                    if await reactions_count_elem.count() > 0:
-                                        count_text = await reactions_count_elem.text_content()
-                                        reactions_info["count"] = int(''.join(filter(str.isdigit, count_text))) if any(c.isdigit() for c in count_text) else 0
-                                        
-                                        # Extract reaction types from images
-                                        reaction_imgs = reactions_count_elem.locator('.reactions-icon')
-                                        for i in range(await reaction_imgs.count()):
-                                            img = reaction_imgs.nth(i)
-                                            reaction_type = await img.get_attribute('alt')
-                                            if reaction_type:
-                                                reactions_info["types"].append(reaction_type)
-                                    
-                                    # Build comment data structure
-                                    comment_data = {
-                                        "author": {
-                                            "name": await name_elem.text_content() if await name_elem.count() > 0 else "",
-                                            "profile_url": await link_elem.get_attribute('href') if await link_elem.count() > 0 else "",
-                                            "title": await title_elem.text_content() if await title_elem.count() > 0 else ""
-                                        },
-                                        "content": await content_elem.text_content() if await content_elem.count() > 0 else "",
-                                        "timestamp": await time_elem.text_content() if await time_elem.count() > 0 else "",
-                                        "reactions": reactions_info,
-                                        "replies": []
-                                    }
-                                    
-                                    # Check for replies
-                                    replies_list = comment.locator('.comments-replies-list')
-                                    if await replies_list.count() > 0:
-                                        # Check for "See previous replies" button
-                                        load_prev_button = replies_list.locator('button:has-text("See previous replies")')
-                                        if await load_prev_button.count() > 0:
-                                            try:
-                                                await load_prev_button.click()
-                                                await asyncio.sleep(1)  # Wait for previous replies to load
-                                                logger.info("Clicked 'See previous replies' button")
-                                            except Exception as e:
-                                                logger.warning(f"Error loading previous replies: {e}")
-                                        
-                                        # Extract all replies
-                                        reply_items = replies_list.locator('.comments-comment-entity--reply')
-                                        for i in range(await reply_items.count()):
-                                            reply = reply_items.nth(i)
-                                            reply_data = await extract_comment_data(reply)  # Recursively extract reply data
-                                            comment_data["replies"].append(reply_data)
-                                    
-                                    return comment_data
-                                except Exception as e:
-                                    logger.warning(f"Error extracting comment data: {e}")
-                                    return None
-                            
-                            # Process all top-level comments
-                            for i in range(await comment_items.count()):
-                                try:
-                                    comment = comment_items.nth(i)
-                                    if await comment.get_attribute('class') and 'comments-comment-entity--reply' not in await comment.get_attribute('class'):
-                                        comment_data = await extract_comment_data(comment)
-                                        if comment_data:
-                                            comments.append(comment_data)
-                                except Exception as e:
-                                    logger.warning(f"Error extracting comment {i}: {e}")
-                                    continue
-                            
-                            # Close comments section
-                            try:
-                                back_button = self.page.locator('button.comments-comment-box__collapse-button')
-                                if await back_button.count() > 0:
-                                    await back_button.click()
-                                    await asyncio.sleep(1)
-                            except Exception as e:
-                                logger.warning(f"Error closing comments: {e}")
-                                
-                        except Exception as e:
-                            logger.error(f"Error processing comments: {e}")
-                    
-                    # Prepare complete post data
-                    post_data = {
-                        "post_number": post_number,
-                        "keyword": keyword,
-                        "author": author_info,
-                        "content": post_content.strip(),
-                        "metadata": post_metadata,
-                        "engagement": {
-                            "total_likers": len(likers),
-                            "total_comments": len(comments),
-                            "likers": likers,
-                            "comments": comments
-                        }
-                    }
-                    
-                    # Save post data to JSON
-                    os.makedirs('posts/json', exist_ok=True)
-                    json_filename = f'posts/json/post_{keyword}_{post_number}_profiles.json'
-                    
-                    with open(json_filename, 'w', encoding='utf-8') as f:
-                        json.dump(post_data, f, indent=2, ensure_ascii=False)
-                    
-                    logger.info(f"Saved {len(profiles)} profiles to {json_filename}")
-                    
-                finally:
-                    # Always try to close the modal and restore container state
+                    await asyncio.sleep(2)
+                except Exception as e:
+                    logger.error(f"Error processing reactions: {e}")
                     await self.close_modal()
-                    await self._restore_container_state(container, post_number)
-                    await asyncio.sleep(1)  # Wait for UI to settle
-                
-                return post_data
-            
+            # Process comments
+            comments = []
+            # Use only the robust selector for the comment button
+            comments_button = container.locator('button:has-text("comment")')
+            if await comments_button.count() > 0:
+                try:
+                    await comments_button.first.scroll_into_view_if_needed()
+                    await asyncio.sleep(1)
+                    await comments_button.first.click()
+                    logger.info("Clicked comments button, waiting for comments section to load...")
+                    await self.page.wait_for_selector('.comments-comment-list__container', timeout=7000)
+                    await asyncio.sleep(1)
+                except Exception as e:
+                    logger.warning(f"Could not open comments section: {e}")
             else:
-                logger.warning(f"No reactions button found for post {post_number}")
-                await self._restore_container_state(container, post_number)
-                return None
-                
+                logger.warning("No visible/enabled comments button found for this post using selector 'button[data-control-name=comments]'.")
+            # Now, only after clicking, try to scrape comments if section is open (global)
+            comments_container = container.locator('.comments-comments-list--cr')
+            processed_comment_ids = set()
+            if await comments_container.count() > 0 and await comments_container.first.is_visible():
+                # Recursively click 'Load more comments' until all are loaded BEFORE scraping
+                load_more_attempts = 0
+                while True:
+                    # Try both class and text-based selectors for robustness
+                    load_more_btns = comments_container.locator('button:has-text("Load more comments")')
+                    btn_count = await load_more_btns.count()
+                    logger.info(f"[Post {post_number}] Found {btn_count} 'Load more comments' buttons on attempt {load_more_attempts+1}")
+                    found = False
+                    for idx in range(btn_count):
+                        btn = load_more_btns.nth(idx)
+                        try:
+                            visible = await btn.is_visible()
+                            try:
+                                disabled = await btn.is_disabled()
+                            except Exception:
+                                disabled = False  # If is_disabled() not supported, assume enabled
+                            if visible and not disabled:
+                                logger.info(f"[Post {post_number}] Attempting to click 'Load more comments' button #{idx+1} (scrolling into view)...")
+                                await btn.scroll_into_view_if_needed()
+                                await asyncio.sleep(0.5)
+                                await btn.click(force=True)
+                                logger.info(f"[Post {post_number}] Clicked 'Load more comments' button #{idx+1}")
+                                await asyncio.sleep(1.2)
+                                found = True
+                        except Exception as e:
+                            logger.warning(f"[Post {post_number}] Failed to click 'Load more comments' button #{idx+1}: {e}")
+                    load_more_attempts += 1
+                    if not found:
+                        logger.info(f"[Post {post_number}] No more clickable 'Load more comments' buttons found after {load_more_attempts} attempts.")
+                        break
+                # Now scrape comments, highlight as processing, then mark as done
+                comment_articles = comments_container.locator('article.comments-comment-entity:not(.comments-comment-entity--reply)')
+                for j in range(await comment_articles.count()):
+                    comment = comment_articles.nth(j)
+                    comment_id = await comment.get_attribute('data-id') or str(j)
+                    if comment_id in processed_comment_ids:
+                        continue
+                    processed_comment_ids.add(comment_id)
+                    # Highlight the comment as processing (yellow border)
+                    try:
+                        await comment.evaluate('node => { node.style.border = "3px solid #ffd700"; node.style.background = "#fffbe6"; }')
+                    except Exception:
+                        pass
+                    # Extract comment author info
+                    try:
+                        author_name_elem = comment.locator('.comments-comment-meta__description-title').first
+                        author_profile_elem = comment.locator('.comments-comment-meta__description-container').first
+                        author_title_elem = comment.locator('.comments-comment-meta__description-subtitle').first
+                        author_image_elem = comment.locator('.ivm-view-attr__img-wrapper img').first
+                        author = {
+                            "name": await author_name_elem.text_content(timeout=5000) or "Unknown User",
+                            "profile_url": await author_profile_elem.get_attribute('href', timeout=5000) or "",
+                            "title": await author_title_elem.text_content(timeout=5000) or "",
+                            "image_url": await author_image_elem.get_attribute('src', timeout=5000) or ""
+                        }
+                    except Exception:
+                        author = {"name": "Unknown User", "profile_url": "", "title": "", "image_url": ""}
+                    try:
+                        content = await comment.locator('.comments-comment-item__main-content').first.text_content()
+                    except Exception:
+                        content = ""
+                    try:
+                        timestamp = await comment.locator('time.comments-comment-meta__data').first.text_content()
+                    except Exception:
+                        timestamp = ""
+                    # Reactions count
+                    reactions_count = 0
+                    reactions_selector = '.comments-comment-social-bar__reactions-count--cr'
+                    try:
+                        reactions_locator = comment.locator(reactions_selector).first
+                        await reactions_locator.wait_for(state='visible', timeout=2000)
+                        reactions_text = await reactions_locator.text_content()
+                        if reactions_text:
+                            reactions_count = int(''.join(filter(str.isdigit, reactions_text)))
+                    except Exception:
+                        reactions_count = 0
+                    # Replies
+                    replies = []
+                    reply_elements = comment.locator('article.comments-comment-entity--reply')
+                    for k in range(await reply_elements.count()):
+                        reply = reply_elements.nth(k)
+                        try:
+                            reply_author = {
+                                "name": await reply.locator('.comments-comment-meta__description-title').first.text_content(),
+                                "profile_url": await reply.locator('.comments-comment-meta__description-container').first.get_attribute('href'),
+                                "title": await reply.locator('.comments-comment-meta__description-subtitle').first.text_content(),
+                                "image_url": await reply.locator('.ivm-view-attr__img-wrapper img').first.get_attribute('src')
+                            }
+                        except Exception:
+                            reply_author = {"name": "Unknown User", "profile_url": "", "title": "", "image_url": ""}
+                        try:
+                            reply_content = await reply.locator('.comments-comment-item__main-content').first.text_content()
+                        except Exception:
+                            reply_content = ""
+                        try:
+                            reply_timestamp = await reply.locator('time.comments-comment-meta__data').first.text_content()
+                        except Exception:
+                            reply_timestamp = ""
+                        replies.append({
+                            "author": reply_author,
+                            "content": reply_content,
+                            "timestamp": reply_timestamp
+                        })
+                    comments.append({
+                        "author": author,
+                        "content": content,
+                        "timestamp": timestamp,
+                        "reactions_count": reactions_count,
+                        "replies": replies
+                    })
+                    # Mark comment as done (fade green)
+                    try:
+                        await comment.evaluate('node => { node.style.border = "3px solid #4caf50"; node.style.background = "#e8f5e9"; node.style.opacity = "0.7"; }')
+                    except Exception:
+                        pass
+                    await asyncio.sleep(0.2)
+            # Save post data to JSON immediately after scraping to prevent data loss
+            post_data = {
+                "post_number": post_number,
+                "keyword": keyword,
+                "author": author_info,
+                "content": post_content.strip(),
+                "metadata": post_metadata,
+                "engagement": {
+                    "total_likers": len(likers),
+                    "total_comments": len(comments),
+                    "likers": likers,
+                    "comments": comments
+                }
+            }
+            os.makedirs('posts/json', exist_ok=True)
+            json_filename = f'posts/json/post_{keyword}_{post_number}_profiles.json'
+            with open(json_filename, 'w', encoding='utf-8') as f:
+                json.dump(post_data, f, indent=2, ensure_ascii=False)
+            logger.info(f"Saved post data to {json_filename}")
+            return post_data
         except Exception as e:
             logger.error(f"Error processing post {post_number}: {e}")
-            await self.close_modal()  # Try to close modal in case of error
+            await self.close_modal()
             return None
 
     async def close_modal(self):
@@ -649,8 +525,15 @@ class LinkedInAutomation:
         except Exception as e:
             logger.error(f"Error restoring container state: {e}")
 
-    async def search_posts(self, keywords: List[str], scroll_pause_time: int = 3, max_scrolls: int = 5):
-        """Search for posts using given keywords, scroll to bottom first, then process all posts."""
+    async def search_posts(self, keywords: List[str], scroll_pause_time: int = 3, idle_threshold: int = 5):
+        """
+        Search for posts using given keywords, continuously scroll and process posts until no new content is found.
+        
+        Args:
+            keywords: List of keywords to search for
+            scroll_pause_time: Time to pause between scrolls in seconds
+            idle_threshold: Number of consecutive scrolls without new content before giving up
+        """
         if not self.is_logged_in:
             logger.error("Not logged in. Cannot search posts.")
             return []
@@ -685,93 +568,76 @@ class LinkedInAutomation:
                     }
                 ''')
 
-                # First scroll to the bottom
-                logger.info("Scrolling to bottom to load all content...")
-                last_height = await self.page.evaluate('document.documentElement.scrollHeight')
-                scroll_attempts = 0
-                max_attempts = max_scrolls
-
-                while scroll_attempts < max_attempts:
-                    # Scroll to bottom
-                    await self.page.evaluate('window.scrollTo(0, document.documentElement.scrollHeight)')
-                    await asyncio.sleep(2)
-
+                processed_post_ids = set()
+                scroll_count = 0
+                last_height = 0
+                no_new_content_count = 0
+                current_scroll_position = 0
+                scroll_step = 800  # pixels to scroll each time
+                last_processed_count = 0
+                
+                # Scroll indefinitely until no new content is found for several consecutive attempts
+                while True:
+                    containers = self.page.locator('.feed-shared-update-v2[data-urn]')
+                    total_containers = await containers.count()
+                    if total_containers == 0:
+                        logger.warning("No containers found, waiting for content to load...")
+                        await asyncio.sleep(2)
+                        continue
+                    posts_processed_this_scroll = 0
+                    for i in range(total_containers):
+                        try:
+                            container = containers.nth(i)
+                            post_id = await container.get_attribute('data-urn')
+                            if not post_id or post_id in processed_post_ids:
+                                continue
+                            processed_post_ids.add(post_id)
+                            if not await container.is_visible():
+                                continue
+                            await container.scroll_into_view_if_needed()
+                            await asyncio.sleep(1)
+                            post_data = await self.process_post_html(container, len(processed_post_ids), keyword)
+                            if post_data and post_data.get('metadata', {}).get('post_url'):
+                                collected_urls.append(post_data['metadata']['post_url'])
+                                logger.info(f"Successfully processed post #{len(processed_post_ids)} for keyword '{keyword}'")
+                            posts_processed_this_scroll += 1
+                            await container.evaluate('''node => {
+                                node.classList.add('highlight-container');
+                            }''')
+                            await asyncio.sleep(1)
+                        except Exception as e:
+                            logger.warning(f"Error processing container {i + 1}: {e}")
+                            continue
+                    if posts_processed_this_scroll == 0:
+                        no_new_content_count += 1
+                        logger.info(f"No new posts processed in this scroll ({no_new_content_count}/{idle_threshold})")
+                    else:
+                        no_new_content_count = 0
+                        logger.info(f"Processed {posts_processed_this_scroll} new posts in this scroll")
+                    # Remove idle_threshold check to make scroll indefinite
+                    # if no_new_content_count >= idle_threshold:
+                    #     logger.info(f"No new content found after {idle_threshold} consecutive scroll attempts. Finishing search for keyword '{keyword}'.")
+                    #     break
+                    if len(processed_post_ids) == last_processed_count:
+                        no_new_content_count += 1
+                    else:
+                        last_processed_count = len(processed_post_ids)
+                    current_scroll_position += scroll_step
+                    await self.page.evaluate(f'window.scrollTo(0, {current_scroll_position})')
+                    await asyncio.sleep(scroll_pause_time)
                     new_height = await self.page.evaluate('document.documentElement.scrollHeight')
                     if new_height == last_height:
-                        # Wait longer at bottom to ensure all content is loaded
-                        logger.info("Reached bottom, waiting 10 seconds for final content...")
-                        await asyncio.sleep(10)
-                        
-                        # Final scroll check
-                        await self.page.evaluate('window.scrollTo(0, document.documentElement.scrollHeight)')
-                        await asyncio.sleep(2)
-                        final_height = await self.page.evaluate('document.documentElement.scrollHeight')
-                        
-                        if final_height == new_height:
-                            logger.info("No more new content loading. Starting to process posts...")
-                            break
-
+                        no_new_content_count += 1
+                    else:
+                        no_new_content_count = 0
                     last_height = new_height
-                    scroll_attempts += 1
-                    logger.info(f"Scrolling... Attempt {scroll_attempts}/{max_attempts}")
-                    await asyncio.sleep(1)
-
-                # Now process all posts from top to bottom
-                logger.info("Processing all posts...")
-                await self.page.evaluate('window.scrollTo(0, 0)')
-                await asyncio.sleep(2)
-
-                # Process all containers in batches
-                containers = self.page.locator('div.fie-impression-container')
-                total_containers = await containers.count()
-                logger.info(f"Found {total_containers} total posts to process")
-
-                processed_containers = set()
-                batch_size = 5
-                batch_urls = []
-
-                # Process containers in batches
-                for i in range(0, total_containers, batch_size):
-                    batch_end = min(i + batch_size, total_containers)
-                    logger.info(f"Processing batch {i//batch_size + 1}, posts {i+1} to {batch_end}")
-
-                    # Process each container in the current batch
-                    for j in range(i, batch_end):
-                        try:
-                            container = containers.nth(j)
-                            
-                            # Get container details for deduplication
-                            container_html = await container.evaluate('node => node.outerHTML')
-                            container_id = hash(container_html)
-
-                            if container_id in processed_containers:
-                                continue
-
-                            if await container.is_visible():
-                                # Process the post and save to JSON
-                                post_data = await self.process_post_html(container_html, j + 1, keyword)
-                                
-                                # Add highlight class
-                                await container.evaluate('''node => {
-                                    node.classList.add('highlight-container');
-                                    node.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                }''')
-
-                                if post_data and post_data.get('post_url'):
-                                    batch_urls.append(post_data['post_url'])
-
-                                processed_containers.add(container_id)
-                                await asyncio.sleep(0.5)  # Short pause for visibility
-
-                        except Exception as e:
-                            logger.warning(f"Error processing container {j+1}: {e}")
-                            continue
-
-                    # Short pause between batches
-                    await asyncio.sleep(1)
-
-                collected_urls.extend(batch_urls)
-                logger.info(f"Finished processing {len(processed_containers)} unique posts for keyword '{keyword}'")
+                    scroll_count += 1
+                    logger.info(f"Scrolling... #{scroll_count}, Position: {current_scroll_position}px, Processed: {len(processed_post_ids)} posts")
+                    # To prevent infinite loop if truly stuck, break after a very high number of scrolls (e.g., 10,000)
+                    if scroll_count > 10000:
+                        logger.warning("Reached 10,000 scrolls, stopping to prevent infinite loop.")
+                        break
+                logger.info(f"Finished processing {len(processed_post_ids)} unique posts for keyword '{keyword}'")
 
             except Exception as e:
                 logger.error(f"Error searching posts for keyword '{keyword}': {e}")
@@ -819,9 +685,15 @@ async def main():
             # "Responsible AI"
         ]
 
-        # Search for posts - targeting around 100 posts
-        # The search_posts method already has target_post_count parameter
-        post_urls = await linkedin.search_posts(search_keywords)
+        # Search for posts - now with indefinite scrolling
+        # The search_posts method will run until it detects no new content
+        logger.info("Beginning indefinite post scraping. Will continue until no new posts are found.")
+        post_urls = await linkedin.search_posts(
+            keywords=search_keywords, 
+            scroll_pause_time=3,   # Time to wait between scrolls (seconds)
+            idle_threshold=5       # Number of scrolls with no new content before stopping
+        )
+        
         print(f"Collected {len(post_urls)} post URLs.")
         if not post_urls:
             logger.error("No post URLs collected.")
