@@ -1,0 +1,275 @@
+{
+  "post_number": 208,
+  "keyword": "Maxim AI",
+  "author": {
+    "name": "Stefan Eder",
+    "profile_url": "https://www.linkedin.com/in/stefan-eder",
+    "title": "AI and Law - Law and AI, Legal Informatics, Insolvenzverwaltung, Restrukturierung, Immobilientransaktionen do ut desAI and Law - Law and AI, Legal Informatics, Insolvenzverwaltung, Restrukturierung, Immobilientransaktionen do ut des",
+    "image_url": "https://media.licdn.com/dms/image/v2/C5603AQHdtDSUVWriww/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1516870024029?e=1753315200&v=beta&t=PbdmHC5OeLZoeWHcSCckhXlIWYv4Qd7EJtBW0YSQDY4"
+  },
+  "content": "🧠 Teaching AI When to Say “I Don’t Know” - a Next Step in Building Trustworthy Systems🧐 One of the biggest risks with today’s AI systems is not what they do not know, it is that they do not know what they do not know⚡ Even worse, they often make things up with confidence (and we often do not know better😔)📄 A new paper titled “Don’t lie to your friends: Learning what you know from collaborative self-play” from a team from Google DeepMind introduces a promising training method to fix this by teaching AI agents how to collaborate, admit uncertainty, and know when to ask for help.🔍 Here’s what the authors propose:👉 Collaborative Self-Play: Multiple AI agents, each with access to different tools or knowledge sources, are trained to work together to answer factual questions. The hopeful outcome? They learn to: 👉 Recognise the limits of their own knowledge👉 Communicate uncertainty👉 Use tools in a more sensible way👉 Ask (others) for input💰Rewarding humility, not just accuracy: Instead of penalizing “I don’t know,” the system rewards agents that seek support or signal uncertainty — a step toward real AI reliability.📈 Why this matters for AI governance:⚠️ Hallucinations remain one of the biggest trust issues in GenAI✅ Collaborative Self-Play is intended to lead to agents that are more self-aware and cautious in their answers🧩 This might support a central goal of frameworks like the EU AI Act: AI that’s not only powerful but honest, interpretable, and safer📍In any case, AI that knows when it is out of its depth would be a great step forward in developing trustworthy explainable AI applications where risk are better manageable🔗 to the paper in the commentshashtag#artificialintelligence hashtag#innovation hashtag#future hashtag#governance hashtag#compliance",
+  "metadata": {
+    "post_url": "https://www.linkedin.com/in/stefan-eder",
+    "timestamp": "2w • 2 weeks ago • Visible to anyone on or off LinkedIn",
+    "visibility": "public"
+  },
+  "engagement": {
+    "total_likers": 43,
+    "total_comments": 3,
+    "likers": [
+      {
+        "url": "https://www.linkedin.com/in/ACoAADpc-2IBaW4YQp5MTkJ6YRVQ5zEjMwHhNj4",
+        "name": "Nàdia Zougagh Aouaj",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAACg_yRwBEEYabLp4JcXX6bubsjK2LogsUfk",
+        "name": "Amanda Horzyk",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAADPH5YB16H0vbi5CuquGOYrE6mDaD9eEdU",
+        "name": "Ahmed Nagy",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAABoXcP0BUwvY-42TK2X2FnMxVhfjWCyPhHM",
+        "name": "Geetha Raju, Ph.D.",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAACVPJNABGwj10wdhrBRfHh4644U440jiziM",
+        "name": "Anthony Alcaraz",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAACdJ0b8BuEeTBKGUPibU8bOuLKws8qeKNWI",
+        "name": "Jagdish Pandya ( JP )",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAOZi90B7oLz_xVEx9lmv773iyQvybzo_Cw",
+        "name": "balaji aditya chavan",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/company/privacy-rules/",
+        "name": "Privacy Rules",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAV30iIBHqLqf3h1r2GXuZLlBmae8dT18EM",
+        "name": "Liliana Certo",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAABwf_v4BKqq8v2-Ag7XkybD91ByPxLg873w",
+        "name": "Ashish Chouhan",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/company/iodis/",
+        "name": "iOdis",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAX1lYQB7vtMqy1iwonmA06LqUFyhhddVZs",
+        "name": "Pandeeswaran.N PMP®,ITIL®",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/company/legalnetics/",
+        "name": "LEGALNETICS",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAQosvwB3Y91NqER27v5gxvI8qhpf8uQ4KM",
+        "name": "F-X Auditor Financiero [RQ] R-Q Analista Tributario [FX]",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAEB6950B2eNND533f5OPZWo9Dvd8-zw8xEw",
+        "name": "Harshit Pastariya",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAD6rJcBQ_BzgtIJ0VZBzdGIKEfO6Z2BnUg",
+        "name": "Lindo Nepi",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAADPLXysBK0vkeeOPKrH-EQko8JAXn4twjYY",
+        "name": "Che-Hao Hsu",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAFCdKVMBifjcaEpmIV8aMfDcJooTS1LNAAk",
+        "name": "Raymond Rivard",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/company/usancen/",
+        "name": "USANCEN by LawThek",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAB9E-loBqabcDxD4mPYKMU5BgHkPB8RCo34",
+        "name": "Bilge Kaan Kiren",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAARBnIsBmOlCQAMHMl9ehqwYVMhqHjiRB_M",
+        "name": "S. Akinmayowa LAWAL",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAEZlBwB915Ns05Q2noypT9fEFPOzterNLs",
+        "name": "Cyrille Naffah",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAlHdB8BwlzUfKj57sp9XPJKKVakH_ozSnU",
+        "name": "Alessio Azzutti",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAACso_IBYJ0aUQtbY9-szirfv4CSN43jfnc",
+        "name": "Sherif AbdelMotaal",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAADIKSsBLjddS2YHFTiHlxit525s3et_qjU",
+        "name": "Sandeep Kumar Jakkaraju",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAOpunQB8PSePK58XLGsfRrI-GyzRMx-JWI",
+        "name": "Dr. Ranjini Syam, Ph.D",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAJILj8BlfK08Pi4mTS-nQ4c55O4SXpMCcY",
+        "name": "Sona Wavde",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAGn1DQBgwD6z_rrKRBLmCnj1rDH6atqveE",
+        "name": "Dr Srinivas Yanamandra",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAACtr60BkkHcvam6nfmpxhTYmYo9CmfYtfk",
+        "name": "Kartik Swaminathan",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAA1YlpEBpHVA8Pp_0I0c-AGR9hAn_wQqk4I",
+        "name": "Vasilis Vasilopoulos",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAVHVQAB57U0uCU8YULq7Mcyd5I3dLt1Vhg",
+        "name": "Elsa Papadopoulou",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAABbfcIsBHGxObyZTQCEbfgxIsFIDG0G3IhE",
+        "name": "Prof. Dr. Nesibe Kurt Konca",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAABbWQgIBbP8YM1MCNP-7LwgHsOtliXfMhTc",
+        "name": "Eraldo Vaccargiu",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAQUlsUBY-vPbu1F42M29X1Nnj18sijUeM8",
+        "name": "Pedro Guillermo Martínez Fernández",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAhqgw4BJZGdVk07Fe33qfdNky9MlF_hnMs",
+        "name": "Stefan Eder",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAATQnjYB_Y1bUCUNYXAt1CAeHZ1BxkobdFc",
+        "name": "Alessandro Parisi",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAB-lOJUBTJj1PaWYbpznpupI50ZOMRJgEDA",
+        "name": "Alicia Urban",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAACIuouEBFpsmNMxcE7OsVfnuQGvG2poKnUM",
+        "name": "Ocman Vicky",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAF24TABMSInddLqJWV3AX16WA99AkGLfVI",
+        "name": "Susanna Gallun",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAACEisk4B-_7Za0q5IAadDmJ8yPb4dHCUYxw",
+        "name": "Shalini Rao",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAsbACwBsCvL86bv7mm2G6OFAua8YE_Dad0",
+        "name": "Lewis Matthews",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAAYBX0sB4xE7Ylc7cLuGN3bFuda47TXbc3s",
+        "name": "Abhishek R. Sharma",
+        "title": ""
+      },
+      {
+        "url": "https://www.linkedin.com/in/ACoAAFltzLMB9ahbqUz08h_BRMnhmWL2EQbYyI8",
+        "name": "Milica Jeremic",
+        "title": ""
+      }
+    ],
+    "comments": [
+      {
+        "author": {
+          "name": "Stefan Eder",
+          "profile_url": "https://www.linkedin.com/in/stefan-eder",
+          "title": "AI and Law - Law and AI, Legal Informatics, Insolvenzverwaltung, Restrukturierung, Immobilientransaktionen do ut des",
+          "image_url": "https://media.licdn.com/dms/image/v2/C5603AQHdtDSUVWriww/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1516870024029?e=1753315200&v=beta&t=PbdmHC5OeLZoeWHcSCckhXlIWYv4Qd7EJtBW0YSQDY4"
+        },
+        "content": "🔗 to the paper https://arxiv.org/pdf/2503.14481",
+        "timestamp": "2w",
+        "reactions_count": 1,
+        "replies": []
+      },
+      {
+        "author": {
+          "name": "William Widen",
+          "profile_url": "https://www.linkedin.com/in/william-widen-732ba3273",
+          "title": "Professor at University of Miami School of Law",
+          "image_url": "https://media.licdn.com/dms/image/v2/D4E03AQFx0AnDpypQVQ/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1694360782370?e=1753315200&v=beta&t=BGNE6AXB8wnB4A_a5qiSmrzzi3SwOeOosJ3ZiYwtoa0"
+        },
+        "content": "Same idea as an AV that self enforces its ODD?",
+        "timestamp": "2w",
+        "reactions_count": 1,
+        "replies": []
+      },
+      {
+        "author": {
+          "name": "Shalini Rao",
+          "profile_url": "https://www.linkedin.com/in/shalini-rao-152216136",
+          "title": "Founder at Future Transformation| Certified Independent Director|",
+          "image_url": "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+        },
+        "content": "Excellent breakdown and a major leap forward for AI evolution Stefan Eder! Enabling AI to understand the boundaries of its own knowledge is transformative. Thanks for the share.",
+        "timestamp": "2w",
+        "reactions_count": 2,
+        "replies": []
+      }
+    ]
+  }
+}
